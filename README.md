@@ -23,14 +23,14 @@ To practice a structured approach to solving system design problems, as such:
        * single point of failures
      * user experience: responsiveness, feedback, lazyload, caching, etc
   7. edge cases & failure handling (adding depths)
-     *  small 
-       *  memory leak
-       *  cache misses
-       *  message loss
+     * small 
+       * memory leak
+       * cache misses
+       * message loss
        * race condition, deadlock
        * cascading failure
        * etc
-     *  big
+     * big
        * 3P API retries
        * DDoS
        * node goes down
