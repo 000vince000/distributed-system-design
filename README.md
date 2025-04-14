@@ -3,8 +3,8 @@
 To practice a structured approach to solving system design problems, as such:
 - use a step-by-step process to guide the flow
   1. requirement gathering
-    1.1 functional
-    1.2 nonfunctional
+  1.1 functional
+  1.2 nonfunctional
   2. api design
   3. workflow design 
     3.1 focus on happy path E2E flow
