@@ -12,13 +12,7 @@ class SystemDesignPractice:
     def __init__(self):
         self.console = Console()
         self.start_time = None
-        self.design_questions = {
-            "1": "Design Facebook Newsfeed",
-            "2": "Design Airbnb",
-            "3": "Design Twitter",
-            "4": "Design Uber",
-            "5": "Design WhatsApp"
-        }
+        self.design_questions = self._load_questions()
         self.current_design = {
             "question": "",
             "requirements": {"functional": [], "nonfunctional": []},
@@ -28,6 +22,63 @@ class SystemDesignPractice:
             "optimizations": [],
             "edge_cases": {"small": [], "big": []}
         }
+
+    def _load_questions(self) -> Dict[str, str]:
+        """Load questions from the question-bank directory."""
+        questions = {}
+        question_bank_dir = "question-bank"
+        
+        if not os.path.exists(question_bank_dir):
+            self.console.print("[yellow]Warning: question-bank directory not found. Using default questions.[/yellow]")
+            return {
+                "1": "Design Facebook Newsfeed",
+                "2": "Design Airbnb",
+                "3": "Design Twitter",
+                "4": "Design Uber",
+                "5": "Design WhatsApp"
+            }
+        
+        try:
+            for filename in os.listdir(question_bank_dir):
+                if filename.startswith('.'):
+                    continue
+                filepath = os.path.join(question_bank_dir, filename)
+                if os.path.isfile(filepath):
+                    with open(filepath, 'r') as f:
+                        content = f.read().strip()
+                        # Use the first line as the question title
+                        title = content.split('\n')[0]
+                        questions[str(len(questions) + 1)] = title
+        except Exception as e:
+            self.console.print(f"[red]Error loading questions: {str(e)}[/red]")
+            return {
+                "1": "Design Facebook Newsfeed",
+                "2": "Design Airbnb",
+                "3": "Design Twitter",
+                "4": "Design Uber",
+                "5": "Design WhatsApp"
+            }
+        
+        return questions
+
+    def _get_question_details(self, question_key: str) -> str:
+        """Get the full details of a selected question."""
+        question_bank_dir = "question-bank"
+        try:
+            # Find the file that contains this question
+            for filename in os.listdir(question_bank_dir):
+                if filename.startswith('.'):
+                    continue
+                filepath = os.path.join(question_bank_dir, filename)
+                if os.path.isfile(filepath):
+                    with open(filepath, 'r') as f:
+                        content = f.read().strip()
+                        if content.split('\n')[0] == self.design_questions[question_key]:
+                            return content
+        except Exception as e:
+            self.console.print(f"[yellow]Warning: Could not load question details: {str(e)}[/yellow]")
+        
+        return self.design_questions[question_key]
 
     def start(self):
         """Start the system design practice session."""
@@ -45,8 +96,10 @@ class SystemDesignPractice:
         for key, value in self.design_questions.items():
             self.console.print(f"{key}. {value}")
         
-        choice = Prompt.ask("Select a design question (1-5)", choices=list(self.design_questions.keys()))
-        self.current_design["question"] = self.design_questions[choice]
+        choice = Prompt.ask("Select a design question", choices=list(self.design_questions.keys()))
+        self.current_design["question"] = self._get_question_details(choice)
+        self.console.print("\n[bold]Selected Question:[/bold]")
+        self.console.print(self.current_design["question"])
         self.gather_requirements()
 
     def gather_requirements(self):
