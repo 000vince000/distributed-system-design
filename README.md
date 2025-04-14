@@ -6,7 +6,9 @@ To practice a structured approach to solving system design problems, as such:
      * functional
      * nonfunctional
   2. api design
-  3. workflow design
+     * internal
+     * external
+  4. workflow design
      * focus on happy path E2E flow
      * identify major components, ie services
   5. architecture diagraming
@@ -40,3 +42,5 @@ To practice a structured approach to solving system design problems, as such:
 - use a templated approach, ie prompting for workflows and components, prompting for considerations, options, and trade-offs
 - based on workflows and components, generate a mermaid diagram (exportable to excalidraw)
 - generate a final MD file in the end, for pasting into an external LLM for grading
+## Interface
+simple terminal input and output
