@@ -214,39 +214,94 @@ class SystemDesignPractice:
                 for req in remaining_reqs:
                     self.console.print(f"- {req}")
 
-        # Display summary of API definitions
-        self.console.print("\n[bold]API Design Summary:[/bold]")
-        for i, req in enumerate(self.current_design["requirements"]["functional"], 1):
-            self.console.print(f"\n{i}. [bold]Requirement: {req}[/bold]")
-            
-            if requirement_apis[req]["internal"]:
-                api = requirement_apis[req]["internal"]
-                self.console.print(f"   Internal Endpoint: {api['endpoint']}")
-                self.console.print(f"   Request: {' '.join(api['request'])}")
-                self.console.print(f"   Response: {' '.join(api['response'])}")
-            
-            if requirement_apis[req]["external"]:
-                api = requirement_apis[req]["external"]
-                self.console.print(f"   External Endpoint: {api['endpoint']}")
-                self.console.print(f"   Request: {' '.join(api['request'])}")
-                self.console.print(f"   Response: {' '.join(api['response'])}")
-
         self.design_workflows()
 
     def design_workflows(self):
-        """Design system workflows."""
+        """Design workflows for each API."""
         self.console.print("\n[bold]Step 3: Workflow Design[/bold]")
-        self.console.print("Format: ComponentA -> ComponentB: action")
-        self.current_design["workflows"] = self._get_multi_line_input(
-            "Enter workflows (one per line):",
-            "END"
-        )
+        
+        # Create a list of all APIs with their requirements
+        api_choices = []
+        for req in self.current_design["requirements"]["functional"]:
+            if self.current_design["apis"]["internal"]:
+                for api in self.current_design["apis"]["internal"]:
+                    api_choices.append((f"Internal: {api['endpoint']}", api, req))
+            if self.current_design["apis"]["external"]:
+                for api in self.current_design["apis"]["external"]:
+                    api_choices.append((f"External: {api['endpoint']}", api, req))
 
-        self.identify_components()
+        if not api_choices:
+            self.console.print("[yellow]No APIs defined yet. Please define APIs first.[/yellow]")
+            return
 
-    def identify_components(self):
-        """Identify system components."""
-        self.console.print("\n[bold]Step 4: Component Identification[/bold]")
+        self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
+        for i, (api_desc, _, req) in enumerate(api_choices, 1):
+            self.console.print(f"{i}. {api_desc} (Requirement: {req})")
+
+        while True:
+            choice = Prompt.ask(
+                "Select an API to design its workflow (or 'done' to finish)",
+                choices=[str(i) for i in range(1, len(api_choices) + 1)] + ["done"]
+            )
+            
+            if choice == "done":
+                break
+                
+            selected_api = api_choices[int(choice) - 1]
+            api_desc, api, req = selected_api
+            
+            self.console.print(f"\n[bold]Designing workflow for: {api_desc}[/bold]")
+            self.console.print(f"Requirement: {req}")
+            self.console.print(f"Request: {' '.join(api['request'])}")
+            self.console.print(f"Response: {' '.join(api['response'])}")
+            
+            # Get high-level workflow steps
+            workflow_steps = self._get_multi_line_input(
+                "Enter high-level workflow steps (one per line):",
+                "END"
+            )
+            
+            # For each step, get detailed definition with substeps
+            step_definitions = []
+            for i, step in enumerate(workflow_steps, 1):
+                self.console.print(f"\n[bold]Step {i}: {step}[/bold]")
+                substeps = self._get_multi_line_input(
+                    "Enter substeps (one per line, leave empty to skip):",
+                    "END"
+                )
+                step_definitions.append({
+                    "step": step,
+                    "substeps": substeps
+                })
+            
+            # Store the workflow
+            if "workflows" not in self.current_design:
+                self.current_design["workflows"] = []
+            
+            workflow = {
+                "api": api["endpoint"],
+                "requirement": req,
+                "steps": step_definitions
+            }
+            
+            self.current_design["workflows"].append(workflow)
+            
+            # Display summary of the current workflow
+            self.console.print("\n[bold]Workflow Summary:[/bold]")
+            self.console.print(f"API: {workflow['api']}")
+            self.console.print(f"Requirement: {workflow['requirement']}")
+            self.console.print("\nSteps:")
+            for step_def in workflow["steps"]:
+                self.console.print(f"\n  {step_def['step']}")
+                if step_def["substeps"]:
+                    for substep in step_def["substeps"]:
+                        self.console.print(f"    - {substep}")
+
+        self.design_data_models()
+
+    def design_data_models(self):
+        """Design data models."""
+        self.console.print("\n[bold]Step 4: Data Model Design[/bold]")
         self.current_design["components"] = self._get_multi_line_input(
             "Enter components (one per line):",
             "END"
