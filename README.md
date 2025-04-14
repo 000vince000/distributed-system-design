@@ -44,3 +44,9 @@ To practice a structured approach to solving system design problems, as such:
 - generate a final MD file in the end, for pasting into an external LLM for grading
 ## Interface
 simple terminal input and output
+## Flow
+1. select a preset of design questions, eg design facebook newsfeed, design airbnb (P0)
+2. prompt user for text inputs, allow multi-line input (P0)
+3. incorporate previous input to formulate or add fidelity of the next step's prompt (P0)
+4. based on mermaid generate visual graph (P1)
+5. when all steps are complete, generate a MD report of original question, steps, diagram, and elapsed time
