@@ -3,26 +3,26 @@
 To practice a structured approach to solving system design problems, as such:
 - use a step-by-step process to guide the flow
   1. requirement gathering
-  1.1 functional
-  1.2 nonfunctional
+     * functional
+     * nonfunctional
   2. api design
-  3. workflow design 
-    3.1 focus on happy path E2E flow
-    3.2 identify major components, ie services
-  4. architecture diagraming
+  3. workflow design
+     * focus on happy path E2E flow
+     * identify major components, ie services
+  5. architecture diagraming
     4.1 wire components together
     4.2 also identify minor components like database schema
     4.3 talk about implement choices with reason and trade-offs against alternatives
     4.4 database schema
     4.5 most importantly, ensure API→workflows→diagram is functionally complete
-  5. optimization against nonfunctional requirements, e.g.:
+  6. optimization against nonfunctional requirements, e.g.:
     5.1 consideration of CAP theorem
     5.2 scalability
     5.3 efficiency
     5.4 resilience
         5.4.1 single point of failures
     5.5 user experience: responsiveness, feedback, lazyload, caching, etc
-  6. edge cases & failure handling (adding depths)
+  7. edge cases & failure handling (adding depths)
     6.1 small 
         6.1.1 memory leak
         6.1.2 cache misses
