@@ -1,4 +1,5 @@
 # distributed-system-design
+
 ## goal
 To practice a structured approach to solving system design problems, as such:
 - use a step-by-step process to guide the flow
