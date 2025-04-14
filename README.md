@@ -1,7 +1,7 @@
 # distributed-system-design
 ## goal
 To practice a structured approach to solving system design problems, as such:
-1. use a step-by-step process to guide the flow
+- use a step-by-step process to guide the flow
   1. requirement gathering
     1.1 functional
     1.2 nonfunctional
@@ -36,7 +36,7 @@ To practice a structured approach to solving system design problems, as such:
         6.2.3 node goes down
         6.2.4 cluster goes down
         6.2.5 etc
-3. use a timer to record total duration, factored into final output for grading
-4. use a templated approach, ie prompting for workflows and components, prompting for considerations, options, and trade-offs
-5. based on workflows and components, generate a mermaid diagram (exportable to excalidraw)
-6. generate a final MD file in the end, for pasting into an external LLM for grading
+- use a timer to record total duration, factored into final output for grading
+- use a templated approach, ie prompting for workflows and components, prompting for considerations, options, and trade-offs
+- based on workflows and components, generate a mermaid diagram (exportable to excalidraw)
+- generate a final MD file in the end, for pasting into an external LLM for grading
