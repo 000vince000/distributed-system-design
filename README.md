@@ -20,7 +20,7 @@ To practice a structured approach to solving system design problems, as such:
      * scalability
      * efficiency
      * resilience
-     ** single point of failures
+       * single point of failures
      * user experience: responsiveness, feedback, lazyload, caching, etc
   7. edge cases & failure handling (adding depths)
      *  small 
