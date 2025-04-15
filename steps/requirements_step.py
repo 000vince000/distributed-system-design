@@ -7,14 +7,14 @@ class RequirementsStep(BaseStep):
         
         self.console.print("\n[bold]Functional Requirements:[/bold]")
         design_data["requirements"]["functional"] = self._get_multi_line_input(
-            "Enter functional requirements (one per line, END to finish):",
-            "END"
+            "Enter functional requirements (one per line, x to finish):",
+            "x"
         )
 
         self.console.print("\n[bold]Non-functional Requirements:[/bold]")
         design_data["requirements"]["nonfunctional"] = self._get_multi_line_input(
-            "Enter non-functional requirements (one per line, END to finish):",
-            "END"
+            "Enter non-functional requirements (one per line, x to finish):",
+            "x"
         )
         
         return design_data 

@@ -62,8 +62,8 @@ class WorkflowStep(BaseStep):
             
             # Get high-level workflow steps
             workflow_steps = self._get_multi_line_input(
-                "Enter high-level workflow steps (one per line, END to finish):",
-                "END"
+                "Enter high-level workflow steps (one per line, x to finish):",
+                "x"
             )
             
             # For each step, get detailed definition with substeps
@@ -71,8 +71,8 @@ class WorkflowStep(BaseStep):
             for i, step in enumerate(workflow_steps, 1):
                 self.console.print(f"\n[bold]Step {i}: {step}[/bold]")
                 substeps = self._get_multi_line_input(
-                    "Enter substeps (one per line, END to finish):",
-                    "END"
+                    "Enter substeps (one per line, x to finish):",
+                    "x"
                 )
                 step_definitions.append({
                     "step": step,

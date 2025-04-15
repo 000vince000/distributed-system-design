@@ -42,19 +42,19 @@ class ApiStep(BaseStep):
             api_type_name = "internal" if api_type == "1" else "external"
             api = self._get_multi_line_input(
                 f"Enter {api_type_name} API endpoint for '{selected_req}'",
-                "END"
-            )[0]  # Take only the first line as the endpoint
+                "x"
+            )[0]
             
             # Get request definition
             request_def = self._get_multi_line_input(
-                "Enter request definition (one per line, END to finish):",
-                "END"
+                "Enter request definition (one per line, x to finish):",
+                "x"
             )
             
             # Get response definition
             response_def = self._get_multi_line_input(
-                "Enter response definition (one per line, END to finish):",
-                "END"
+                "Enter response definition (one per line, x to finish):",
+                "x"
             )
             
             # Store the complete API definition

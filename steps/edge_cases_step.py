@@ -7,13 +7,13 @@ class EdgeCasesStep(BaseStep):
         
         self.console.print("\n[bold]Small Edge Cases:[/bold]")
         design_data["edge_cases"]["small"] = self._get_multi_line_input(
-            "Enter small edge cases (one per line, END to finish):",
-            "END"
+            "Enter small edge cases (one per line, x to finish):",
+            "x"
         )
 
         self.console.print("\n[bold]Big Edge Cases:[/bold]")
         design_data["edge_cases"]["big"] = self._get_multi_line_input(
-            "Enter big edge cases (one per line, END to finish):",
-            "END"
+            "Enter big edge cases (one per line, x to finish):",
+            "x"
         )
         return design_data 

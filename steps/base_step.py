@@ -6,7 +6,7 @@ class BaseStep:
         self.console = console or Console()
         self.prompt = Prompt()
     
-    def _get_multi_line_input(self, prompt: str, terminator: str = "") -> list:
+    def _get_multi_line_input(self, prompt: str, terminator: str = "x") -> list:
         """Get multi-line input from user until terminator is entered."""
         self.console.print(f"\n{prompt}")
         lines = []

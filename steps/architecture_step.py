@@ -15,6 +15,8 @@ class ArchitectureStep(BaseStep):
                 diagram.append(f"    {comp}[(Database)]")
             elif type_ == "Cache":
                 diagram.append(f"    {comp}[(Cache)]")
+            else:  # Other type
+                diagram.append(f"    {comp}[{comp}]")
         
         # Add relationships
         for rel in design_data["architecture"]["relationships"]:
@@ -24,14 +26,17 @@ class ArchitectureStep(BaseStep):
             protocol = rel["protocol"]
             description = rel["description"]
             
+            # Quote the description text
+            label = f'"{protocol}: {description}"'
+            
             if protocol == "HTTP":
-                diagram.append(f"    {source} -->|HTTP: {description}| {target}")
+                diagram.append(f"    {source} -->|{label}| {target}")
             elif protocol == "gRPC":
-                diagram.append(f"    {source} -.->|gRPC: {description}| {target}")
+                diagram.append(f"    {source} -.->|{label}| {target}")
             elif protocol == "WebSocket":
-                diagram.append(f"    {source} ===|WS: {description}| {target}")
-            elif protocol == "Database":
-                diagram.append(f"    {source} --|DB: {description}| {target}")
+                diagram.append(f"    {source} ===|{label}| {target}")
+            else:  # Other protocol
+                diagram.append(f"    {source} -->|{label}| {target}")
         
         return "\n".join(diagram)
 
@@ -46,17 +51,14 @@ class ArchitectureStep(BaseStep):
         for workflow in design_data.get("workflows", []):
             steps = workflow["steps"]
             for i in range(len(steps)):
-                # Extract service names from step descriptions
-                step = steps[i]["step"].lower()
-                services = ["client", "userservice", "mappingservice", "notificationservice"]
-                service = next((s for s in services if s in step), None)
-                if service:
-                    components.add(service)
-                    if i < len(steps) - 1:
-                        next_step = steps[i + 1]["step"].lower()
-                        next_service = next((s for s in services if s in next_step), None)
-                        if next_service:
-                            relationships.add((service, next_service))
+                # Extract component name from step
+                step = steps[i]["step"].strip().lower()
+                components.add(step)
+                
+                # If there's a next step, create a relationship
+                if i < len(steps) - 1:
+                    next_step = steps[i + 1]["step"].strip().lower()
+                    relationships.add((step, next_step))
         
         if not components:
             self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
@@ -66,11 +68,27 @@ class ArchitectureStep(BaseStep):
         self.console.print("\n[bold]Specify component types:[/bold]")
         component_types = {}
         for comp in sorted(components):
+            self.console.print(f"\nSelect type for {comp}:")
+            self.console.print("1. API")
+            self.console.print("2. Service")
+            self.console.print("3. Database")
+            self.console.print("4. Cache")
+            self.console.print("5. Other")
+            
             type_choice = self.prompt.ask(
-                f"Select type for {comp}",
-                choices=["API", "Service", "Database", "Cache"]
+                "Select type",
+                choices=["1", "2", "3", "4", "5"]
             )
-            component_types[comp] = type_choice
+            
+            # Map choice to type
+            type_map = {
+                "1": "API",
+                "2": "Service",
+                "3": "Database",
+                "4": "Cache",
+                "5": "Other"
+            }
+            component_types[comp] = type_map[type_choice]
         
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
@@ -78,13 +96,30 @@ class ArchitectureStep(BaseStep):
         for i, (source, target) in enumerate(sorted(relationships), 1):
             self.console.print(f"\n{i}. {source} -> {target}")
             description = self._get_multi_line_input(
-                "Enter relationship description (END to finish):",
-                "END"
+                "Enter relationship description (x to finish):",
+                "x"
             )[0]
-            protocol = self.prompt.ask(
+            
+            self.console.print("\nSelect protocol:")
+            self.console.print("1. HTTP")
+            self.console.print("2. gRPC")
+            self.console.print("3. WebSocket")
+            self.console.print("4. Other")
+            
+            protocol_choice = self.prompt.ask(
                 "Select protocol",
-                choices=["HTTP", "gRPC", "WebSocket", "Database"]
+                choices=["1", "2", "3", "4"]
             )
+            
+            # Map choice to protocol
+            protocol_map = {
+                "1": "HTTP",
+                "2": "gRPC",
+                "3": "WebSocket",
+                "4": "Other"
+            }
+            protocol = protocol_map[protocol_choice]
+            
             described_relationships.append({
                 "relationship": f"{source} -> {target}",
                 "description": description,
@@ -96,8 +131,8 @@ class ArchitectureStep(BaseStep):
         if any(t in ["Database", "Cache"] for t in component_types.values()):
             self.console.print("\n[bold]Enter database schema:[/bold]")
             schema = self._get_multi_line_input(
-                "Enter database tables (TableName: field1:type, field2:type, ...) (END to finish):",
-                "END"
+                "Enter database tables (TableName: field1:type, field2:type, ...) (x to finish):",
+                "x"
             )
         
         # Store architecture design
