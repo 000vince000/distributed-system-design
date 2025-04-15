@@ -9,23 +9,23 @@ To practice a structured approach to solving system design problems, as such:
   2. api design
      * internal
      * external
-  4. workflow design
+  3. workflow design
      * focus on happy path E2E flow
      * identify major components, ie services
-  5. architecture diagraming
+  4. architecture diagraming
      * wire components together
      * also identify minor components like database schema
      * talk about implement choices with reason and trade-offs against alternatives
      * database schema
      * most importantly, ensure API→workflows→diagram is functionally complete
-  6. optimization against nonfunctional requirements, e.g.:
+  5. optimization against nonfunctional requirements, e.g.:
      * consideration of CAP theorem
      * scalability
      * efficiency
      * resilience
        * single point of failures
      * user experience: responsiveness, feedback, lazyload, caching, etc
-  7. edge cases & failure handling (adding depths)
+  6. edge cases & failure handling (adding depths)
      * small 
        * memory leak
        * cache misses
