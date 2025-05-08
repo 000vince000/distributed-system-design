@@ -97,5 +97,26 @@ class WorkflowStep(BaseStep):
                 if step_def["substeps"]:
                     for substep in step_def["substeps"]:
                         self.console.print(f"    - {substep}")
+            
+            # Display available APIs again before next selection
+            self.console.print("\n[bold]Available APIs:[/bold]")
+            # Filter out APIs that already have workflows
+            available_apis = []
+            for i, (api_desc, api, req) in enumerate(api_choices, 1):
+                # Check if this API already has a workflow
+                if not any(w["api"] == api["endpoint"] for w in design_data["workflows"]):
+                    available_apis.append((i, api_desc))
+            
+            if not available_apis:
+                self.console.print("[yellow]No more APIs available to design workflows for.[/yellow]")
+                break
+                
+            for i, api_desc in available_apis:
+                self.console.print(f"{i}. {api_desc}")
+            
+            # Update choices to only include available APIs
+            choices = [str(i) for i, _ in available_apis]
+            if design_data["workflows"]:
+                choices.append("done")
         
         return design_data 
