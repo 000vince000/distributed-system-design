@@ -27,19 +27,20 @@ To practice a structured approach to solving system design problems, as such:
      * user experience: responsiveness, feedback, lazyload, caching, etc
      * for each choice, talk about implement choices with reason and trade-offs against alternatives
   6. edge cases & failure handling (adding depths)
-     * small 
+     * edge cases
+     * small scale failures
        * memory leak
        * cache misses
        * message loss
        * race condition, deadlock
-       * cascading failure
-       * etc
-     * big
-       * 3P API retries
+       * cascading failure       
+     * large scale failures
+       * 3P API down
+       * service overwhelmed
        * DDoS
        * node goes down
        * cluster goes down
-       * etc
+       * deployment failure
 - use a timer to record total duration, factored into final output for grading
 - use a templated approach, ie prompting for workflows and components, prompting for considerations, options, and trade-offs
 - based on workflows and components, generate a mermaid diagram (exportable to excalidraw)

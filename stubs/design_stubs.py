@@ -125,7 +125,25 @@ def get_step4_stub():
 
 def get_step5_stub():
     """Stub data for Optimization Step (Step 5)"""
-    return get_step4_stub()
+    return {
+        **get_step4_stub(),
+        "optimizations": [
+            "Component: Load Balancer",
+            "  - Scalability: Horizontal scaling",
+            "  - Efficiency: Load balancing",
+            "Component: Application Server",
+            "  - Scalability: Horizontal scaling",
+            "  - Efficiency: Worker parallelism",
+            "  - User Experience: Lazy load",
+            "Component: Cache",
+            "  - Consistency: Write-through cache",
+            "  - Efficiency: Caching",
+            "Component: Database",
+            "  - Scalability: Read replica",
+            "  - Efficiency: DB indexing",
+            "  - Efficiency: DB connection pooler"
+        ]
+    }
 
 def get_step6_stub():
     """Stub data for Edge Cases Step (Step 6)"""
