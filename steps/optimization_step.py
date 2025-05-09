@@ -1,46 +1,155 @@
 from .base_step import BaseStep
 
 class OptimizationStep(BaseStep):
+    def __init__(self, console=None):
+        super().__init__(console)
+        # Define optimization options
+        self.optimization_options = {
+            "1": {
+                "name": "Scalability",
+                "options": {
+                    "1": "Vertical scaling",
+                    "2": "Horizontal scaling",
+                    "3": "Sharding",
+                    "4": "Async processing",
+                    "5": "Read replica"
+                }
+            },
+            "2": {
+                "name": "Consistency",
+                "options": {
+                    "1": "Quorum",
+                    "2": "Write-through cache",
+                    "3": "Distributed lock",
+                    "4": "ACID compliant storage",
+                    "5": "FIFO queue",
+                    "6": "Token leasing"
+                }
+            },
+            "3": {
+                "name": "Efficiency",
+                "options": {
+                    "1": "Transport data compression",
+                    "2": "Pre-upload transport data",
+                    "3": "CDN",
+                    "4": "Use UDP instead of TCP",
+                    "5": "Load balancing",
+                    "6": "Caching",
+                    "7": "Worker parallelism",
+                    "8": "DB indexing",
+                    "9": "NoSQL DB",
+                    "10": "DB read replica",
+                    "11": "DB connection pooler",
+                    "12": "DB materialized view"
+                }
+            },
+            "4": {
+                "name": "User Experience",
+                "options": {
+                    "1": "Client browser caching",
+                    "2": "Cookies",
+                    "3": "Lazy load",
+                    "4": "Realtime notification"
+                }
+            }
+        }
+
+    def _get_components(self, design_data):
+        """Extract unique components from workflows."""
+        components = set()
+        for workflow in design_data.get("workflows", []):
+            for step in workflow["steps"]:
+                components.add(step["step"].strip())
+        return sorted(list(components))
+
+    def _select_optimization_category(self):
+        """Let user select optimization category."""
+        self.console.print("\n[bold]Select optimization category:[/bold]")
+        for key, value in self.optimization_options.items():
+            self.console.print(f"{key}/ {value['name']}")
+        self.console.print("x/ Done")
+        
+        choices = list(self.optimization_options.keys()) + ["x"]
+        return self.prompt.ask("Select category:", choices=choices)
+
+    def _select_optimization_options(self, category):
+        """Let user select specific optimization options for a category."""
+        options = self.optimization_options[category]["options"]
+        self.console.print(f"\n[bold]Select {self.optimization_options[category]['name']} optimizations:[/bold]")
+        for key, value in options.items():
+            self.console.print(f"{category}.{key}/ {value}")
+        
+        choices = list(options.keys())
+        selected = self.prompt.ask(
+            "Select options (comma-separated numbers):",
+            choices=choices
+        )
+        
+        selected_indices = [x.strip() for x in selected.split(",")]
+        return [options[idx] for idx in selected_indices if idx in options]
+
     def execute(self, design_data):
         """Add design optimizations."""
         self.console.print("\n[bold]Step 5: Design Optimization[/bold]")
         
-        # Get non-functional requirements
-        nonfunctional_reqs = design_data["requirements"]["nonfunctional"]
-        if not nonfunctional_reqs:
-            self.console.print("[yellow]No non-functional requirements defined. Please define requirements first.[/yellow]")
+        # Get components from workflows
+        components = self._get_components(design_data)
+        if not components:
+            self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
             return design_data
+        
+        # Store all optimizations
+        all_optimizations = []
+        remaining_components = components.copy()
+        
+        while remaining_components:
+            # Show remaining components
+            self.console.print("\n[bold]Remaining components to optimize:[/bold]")
+            for i, comp in enumerate(remaining_components, 1):
+                self.console.print(f"{i}. {comp}")
             
-        # Display non-functional requirements for selection
-        self.console.print("\n[bold]Select non-functional requirements to optimize for:[/bold]")
-        for i, req in enumerate(nonfunctional_reqs, 1):
-            self.console.print(f"{i}. {req}")
-        self.console.print(f"{len(nonfunctional_reqs) + 1}. All requirements")
-        
-        # Get user selection
-        choices = [str(i) for i in range(1, len(nonfunctional_reqs) + 2)]
-        selected = self.prompt.ask(
-            "Select requirements to optimize for (comma-separated numbers):",
-            choices=choices
-        )
-        
-        # Parse selected requirements
-        selected_indices = [int(x.strip()) for x in selected.split(",")]
-        selected_reqs = []
-        if len(nonfunctional_reqs) + 1 in selected_indices:
-            selected_reqs = nonfunctional_reqs
-        else:
-            selected_reqs = [nonfunctional_reqs[i-1] for i in selected_indices if 1 <= i <= len(nonfunctional_reqs)]
-        
-        # Get optimizations for each selected requirement
-        optimizations = []
-        for req in selected_reqs:
-            self.console.print(f"\n[bold]Enter optimizations for: {req}[/bold]")
-            req_optimizations = self._get_multi_line_input(
-                "Enter optimizations (one per line, x to finish):",
-                "x"
+            # Let user select a component
+            choices = [str(i) for i in range(1, len(remaining_components) + 1)]
+            choice = self.prompt.ask(
+                "Select a component to optimize:",
+                choices=choices
             )
-            optimizations.extend([f"{req}: {opt}" for opt in req_optimizations])
+            
+            # Get the selected component
+            component = remaining_components[int(choice) - 1]
+            self.console.print(f"\n[bold]Optimizing component: {component}[/bold]")
+            
+            # Get optimizations for this component
+            component_optimizations = []
+            while True:
+                category = self._select_optimization_category()
+                if category == "x":
+                    break
+                
+                selected_options = self._select_optimization_options(category)
+                for option in selected_options:
+                    component_optimizations.append(f"{self.optimization_options[category]['name']}: {option}")
+            
+            if component_optimizations:
+                all_optimizations.append(f"Component: {component}")
+                all_optimizations.extend([f"  - {opt}" for opt in component_optimizations])
+            
+            # Remove the optimized component from remaining components
+            remaining_components.remove(component)
+            
+            # Show current optimization summary
+            if all_optimizations:
+                self.console.print("\n[bold]Current Optimization Summary:[/bold]")
+                for opt in all_optimizations:
+                    self.console.print(opt)
         
-        design_data["optimizations"] = optimizations
+        # Store optimizations in design data
+        design_data["optimizations"] = all_optimizations
+        
+        # Display final summary
+        if all_optimizations:
+            self.console.print("\n[bold]Final Optimization Summary:[/bold]")
+            for opt in all_optimizations:
+                self.console.print(opt)
+        
         return design_data 

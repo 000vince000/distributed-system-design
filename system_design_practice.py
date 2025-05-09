@@ -7,6 +7,7 @@ from typing import List, Dict
 import json
 import os
 from datetime import datetime
+import argparse
 
 from steps.requirements_step import RequirementsStep
 from steps.api_step import ApiStep
@@ -14,6 +15,7 @@ from steps.workflow_step import WorkflowStep
 from steps.architecture_step import ArchitectureStep
 from steps.optimization_step import OptimizationStep
 from steps.edge_cases_step import EdgeCasesStep
+from stubs.design_stubs import get_step1_stub, get_step2_stub, get_step3_stub, get_step4_stub, get_step5_stub, get_step6_stub
 
 class SystemDesignPractice:
     def __init__(self):
@@ -110,29 +112,129 @@ class SystemDesignPractice:
         
         return self.design_questions[question_key]
 
-    def start(self):
+    def _display_stub_summary(self, step_number: int):
+        """Display a summary of the stub data for a given step."""
+        step_names = {
+            1: "Requirements",
+            2: "APIs",
+            3: "Workflows",
+            4: "Architecture",
+            5: "Optimizations",
+            6: "Edge Cases"
+        }
+        
+        self.console.print(f"\n[bold blue]Step {step_number}: {step_names[step_number]} Summary[/bold blue]")
+        
+        if step_number == 1:
+            self.console.print("\n[bold]Functional Requirements:[/bold]")
+            for req in self.current_design["requirements"]["functional"]:
+                self.console.print(f"- {req}")
+            self.console.print("\n[bold]Non-functional Requirements:[/bold]")
+            for req in self.current_design["requirements"]["nonfunctional"]:
+                self.console.print(f"- {req}")
+        
+        elif step_number == 2:
+            self.console.print("\n[bold]Internal APIs:[/bold]")
+            for api in self.current_design["apis"]["internal"]:
+                self.console.print(f"- {api['endpoint']}")
+                self.console.print(f"  Request: {', '.join(api['request'])}")
+                self.console.print(f"  Response: {', '.join(api['response'])}")
+            self.console.print("\n[bold]External APIs:[/bold]")
+            for api in self.current_design["apis"]["external"]:
+                self.console.print(f"- {api['endpoint']}")
+                self.console.print(f"  Request: {', '.join(api['request'])}")
+                self.console.print(f"  Response: {', '.join(api['response'])}")
+        
+        elif step_number == 3:
+            self.console.print("\n[bold]Workflows:[/bold]")
+            for workflow in self.current_design["workflows"]:
+                self.console.print(f"\nAPI: {workflow['api']}")
+                self.console.print(f"Requirement: {workflow['requirement']}")
+                self.console.print("Steps:")
+                for step in workflow["steps"]:
+                    self.console.print(f"  {step['step']}")
+                    for substep in step["substeps"]:
+                        self.console.print(f"    - {substep}")
+        
+        elif step_number == 4:
+            if "architecture" in self.current_design:
+                self.console.print("\n[bold]Component Types:[/bold]")
+                for comp, type_ in self.current_design["architecture"]["component_types"].items():
+                    self.console.print(f"- {comp}: {type_}")
+                
+                self.console.print("\n[bold]Relationships:[/bold]")
+                for rel in self.current_design["architecture"]["relationships"]:
+                    self.console.print(f"- {rel['relationship']}")
+                    self.console.print(f"  Description: {rel['description']}")
+                    self.console.print(f"  Protocol: {rel['protocol']}")
+                
+                if "database_schema" in self.current_design["architecture"]:
+                    self.console.print("\n[bold]Database Schema:[/bold]")
+                    for schema in self.current_design["architecture"]["database_schema"]:
+                        self.console.print(f"- {schema}")
+        
+        elif step_number == 5:
+            if "optimizations" in self.current_design:
+                self.console.print("\n[bold]Optimizations:[/bold]")
+                for opt in self.current_design["optimizations"]:
+                    self.console.print(f"- {opt}")
+        
+        elif step_number == 6:
+            if "edge_cases" in self.current_design:
+                self.console.print("\n[bold]Small Edge Cases:[/bold]")
+                for case in self.current_design["edge_cases"]["small"]:
+                    self.console.print(f"- {case}")
+                self.console.print("\n[bold]Big Edge Cases:[/bold]")
+                for case in self.current_design["edge_cases"]["big"]:
+                    self.console.print(f"- {case}")
+
+    def start(self, start_step: int = 1):
         """Start the system design practice session."""
         try:
             self.start_time = time.time()
             self.console.print(Panel.fit("System Design Practice Tool", style="bold blue"))
-            self.select_design_question()
+            
+            # If starting from a specific step, load stub data
+            if start_step > 1:
+                stub_functions = {
+                    2: get_step1_stub,
+                    3: get_step2_stub,
+                    4: get_step3_stub,
+                    5: get_step4_stub,
+                    6: get_step5_stub
+                }
+                if start_step in stub_functions:
+                    self.current_design = stub_functions[start_step]()
+                    self.console.print(f"\n[bold]Starting from Step {start_step} with stub data[/bold]")
+                    
+                    # Display summaries of all previous steps
+                    self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
+                    for step in range(1, start_step):
+                        self._display_stub_summary(step)
+                else:
+                    self.console.print("[red]Invalid start step number[/red]")
+                    return
+            
+            self.select_design_question(start_step)
         except Exception as e:
             self.console.print(f"[red]Error starting session: {str(e)}[/red]")
             raise
 
-    def select_design_question(self):
+    def select_design_question(self, start_step: int = 1):
         """Select a design question to work on."""
-        self.console.print("\nAvailable Design Questions:")
-        for key, value in self.design_questions.items():
-            self.console.print(f"{key}. {value}")
+        if not self.current_design["question"]:
+            self.console.print("\nAvailable Design Questions:")
+            for key, value in self.design_questions.items():
+                self.console.print(f"{key}. {value}")
+            
+            choice = Prompt.ask("Select a design question", choices=list(self.design_questions.keys()))
+            self.current_design["question"] = self._get_question_details(choice)
+            self.console.print("\n[bold]Selected Question:[/bold]")
+            self.console.print(self.current_design["question"])
         
-        choice = Prompt.ask("Select a design question", choices=list(self.design_questions.keys()))
-        self.current_design["question"] = self._get_question_details(choice)
-        self.console.print("\n[bold]Selected Question:[/bold]")
-        self.console.print(self.current_design["question"])
-        
-        # Execute each step in sequence
-        for step in self.steps:
+        # Execute steps starting from the specified step
+        for i, step in enumerate(self.steps[start_step-1:], start=start_step):
+            self.console.print(f"\n[bold]Step {i}: {step.__class__.__name__}[/bold]")
             self.current_design = step.execute(self.current_design)
         
         self.generate_report()
@@ -176,6 +278,20 @@ class SystemDesignPractice:
             # Generate mermaid diagram
             mermaid_diagram = self.generate_mermaid_diagram()
 
+            # Format API sections
+            internal_apis = "\n".join(f"- {api['endpoint']}" for api in self.current_design['apis']['internal'])
+            external_apis = "\n".join(f"- {api['endpoint']}" for api in self.current_design['apis']['external'])
+            
+            # Format workflow section
+            workflows = "\n".join(f"- {workflow['api']}" for workflow in self.current_design['workflows'])
+            
+            # Format components section
+            components = []
+            if "architecture" in self.current_design:
+                for comp, type_ in self.current_design["architecture"]["component_types"].items():
+                    components.append(f"- {comp}: {type_}")
+            components_str = "\n".join(components)
+
             report = f"""# System Design Practice Report
 
 ## Design Question
@@ -193,16 +309,16 @@ class SystemDesignPractice:
 
 ## APIs
 ### Internal
-{chr(10).join(f"- {api}" for api in self.current_design['apis']['internal'])}
+{internal_apis}
 
 ### External
-{chr(10).join(f"- {api}" for api in self.current_design['apis']['external'])}
+{external_apis}
 
 ## Workflows
-{chr(10).join(f"- {workflow}" for workflow in self.current_design['workflows'])}
+{workflows}
 
 ## Components
-{chr(10).join(f"- {component}" for component in self.current_design['components'])}
+{components_str}
 
 ## System Architecture
 ```mermaid
@@ -230,6 +346,14 @@ class SystemDesignPractice:
         except Exception as e:
             self.console.print(f"[red]Error generating report: {str(e)}[/red]")
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(description='System Design Practice Tool')
+    parser.add_argument('--start-step', type=int, default=1,
+                      help='Start from a specific step (1-6) using stub data')
+    args = parser.parse_args()
+    
     practice = SystemDesignPractice()
-    practice.start() 
+    practice.start(args.start_step)
+
+if __name__ == "__main__":
+    main() 
