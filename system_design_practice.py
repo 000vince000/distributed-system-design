@@ -242,7 +242,6 @@ class SystemDesignPractice:
         
         # Execute steps starting from the specified step
         for i, step in enumerate(self.steps[start_step-1:], start=start_step):
-            self.console.print(f"\n[bold]Step {i}: {step.__class__.__name__}[/bold]")
             self.current_design = step.execute(self.current_design)
         
         self.generate_report()
@@ -250,26 +249,43 @@ class SystemDesignPractice:
     def generate_mermaid_diagram(self):
         """Generate a mermaid diagram from components and workflows."""
         try:
+            if "architecture" not in self.current_design:
+                return "graph TD\n    A[No architecture defined]"
+
             diagram = ["graph TD"]
             
-            # Add components as nodes
-            for i, component in enumerate(self.current_design["components"]):
-                safe_name = component.replace(" ", "_")
-                diagram.append(f"    {safe_name}[{component}]")
+            # Add components with their types
+            for comp, type_ in self.current_design["architecture"]["component_types"].items():
+                if type_ == "API":
+                    diagram.append(f"    {comp}[{comp}]")
+                elif type_ == "Service":
+                    diagram.append(f"    {comp}(({comp}))")
+                elif type_ == "Database":
+                    diagram.append(f"    {comp}[(Database)]")
+                elif type_ == "Cache":
+                    diagram.append(f"    {comp}[(Cache)]")
+                else:  # Other type
+                    diagram.append(f"    {comp}[{comp}]")
             
-            # Add workflows as connections
-            for workflow in self.current_design["workflows"]:
-                if "->" in workflow:
-                    source, target = workflow.split("->", 1)
-                    source = source.strip().replace(" ", "_")
-                    if ":" in target:
-                        target, action = target.split(":", 1)
-                        target = target.strip().replace(" ", "_")
-                        action = action.strip()
-                        diagram.append(f"    {source} -->|{action}| {target}")
-                    else:
-                        target = target.strip().replace(" ", "_")
-                        diagram.append(f"    {source} --> {target}")
+            # Add relationships
+            for rel in self.current_design["architecture"]["relationships"]:
+                source, target = rel["relationship"].split("->")
+                source = source.strip()
+                target = target.strip()
+                protocol = rel["protocol"]
+                description = rel["description"]
+                
+                # Quote the description text
+                label = f'"{protocol}: {description}"'
+                
+                if protocol == "HTTP":
+                    diagram.append(f"    {source} -->|{label}| {target}")
+                elif protocol == "gRPC":
+                    diagram.append(f"    {source} -.->|{label}| {target}")
+                elif protocol == "WebSocket":
+                    diagram.append(f"    {source} ===|{label}| {target}")
+                else:  # Other protocol
+                    diagram.append(f"    {source} -->|{label}| {target}")
             
             return "\n".join(diagram)
         except Exception as e:
@@ -291,14 +307,52 @@ class SystemDesignPractice:
             external_apis = "\n".join(f"- {api['endpoint']}" for api in self.current_design['apis']['external'])
             
             # Format workflow section
-            workflows = "\n".join(f"- {workflow['api']}" for workflow in self.current_design['workflows'])
-            
+            workflows = []
+            for workflow in self.current_design['workflows']:
+                workflows.append(f"- {workflow['api']}")
+                workflows.append(f"  Requirement: {workflow['requirement']}")
+                for step in workflow['steps']:
+                    workflows.append(f"  {step['step']}")
+                    for substep in step['substeps']:
+                        workflows.append(f"    - {substep}")
+            workflows_str = "\n".join(workflows)
+
             # Format components section
             components = []
             if "architecture" in self.current_design:
                 for comp, type_ in self.current_design["architecture"]["component_types"].items():
                     components.append(f"- {comp}: {type_}")
             components_str = "\n".join(components)
+
+            # Format optimizations section
+            optimizations = []
+            if "optimizations" in self.current_design:
+                for opt in self.current_design["optimizations"]:
+                    optimizations.append(f"- {opt}")
+            optimizations_str = "\n".join(optimizations)
+
+            # Format edge cases section
+            edge_cases = []
+            if "edge_cases" in self.current_design:
+                if "edge_cases" in self.current_design["edge_cases"]:
+                    edge_cases.append("### General Edge Cases")
+                    for case in self.current_design["edge_cases"]["edge_cases"]:
+                        edge_cases.append(f"- {case}")
+                
+                if "small_scale" in self.current_design["edge_cases"]:
+                    edge_cases.append("\n### Small Scale Failures")
+                    for failure in self.current_design["edge_cases"]["small_scale"]:
+                        edge_cases.append(f"- {failure['failure']}")
+                        for mitigation in failure['mitigation']:
+                            edge_cases.append(f"  - {mitigation}")
+                
+                if "large_scale" in self.current_design["edge_cases"]:
+                    edge_cases.append("\n### Large Scale Failures")
+                    for failure in self.current_design["edge_cases"]["large_scale"]:
+                        edge_cases.append(f"- {failure['failure']}")
+                        for mitigation in failure['mitigation']:
+                            edge_cases.append(f"  - {mitigation}")
+            edge_cases_str = "\n".join(edge_cases)
 
             report = f"""# System Design Practice Report
 
@@ -323,7 +377,7 @@ class SystemDesignPractice:
 {external_apis}
 
 ## Workflows
-{workflows}
+{workflows_str}
 
 ## Components
 {components_str}
@@ -334,14 +388,10 @@ class SystemDesignPractice:
 ```
 
 ## Optimizations
-{chr(10).join(f"- {opt}" for opt in self.current_design['optimizations'])}
+{optimizations_str}
 
 ## Edge Cases
-### Small
-{chr(10).join(f"- {case}" for case in self.current_design['edge_cases']['small'])}
-
-### Big
-{chr(10).join(f"- {case}" for case in self.current_design['edge_cases']['big'])}
+{edge_cases_str}
 """
 
             with open(filename, 'w') as f:
