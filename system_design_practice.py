@@ -172,6 +172,14 @@ class SystemDesignPractice:
                     self.console.print("\n[bold]Database Schema:[/bold]")
                     for schema in self.current_design["architecture"]["database_schema"]:
                         self.console.print(f"- {schema}")
+                
+                # Generate and display Mermaid diagram
+                architecture_step = ArchitectureStep(self.console)
+                mermaid_diagram = architecture_step._generate_mermaid_diagram(self.current_design)
+                self.console.print("\n[bold]Architecture Diagram:[/bold]")
+                self.console.print("```mermaid")
+                self.console.print(mermaid_diagram)
+                self.console.print("```")
         
         elif step_number == 5:
             if "optimizations" in self.current_design:
