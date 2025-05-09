@@ -25,6 +25,7 @@ To practice a structured approach to solving system design problems, as such:
      * resilience
        * single point of failures
      * user experience: responsiveness, feedback, lazyload, caching, etc
+     * for each choice, talk about implement choices with reason and trade-offs against alternatives
   6. edge cases & failure handling (adding depths)
      * small 
        * memory leak
