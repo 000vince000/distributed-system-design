@@ -190,5 +190,6 @@ class ArchitectureStep(BaseStep):
         self.console.print("```mermaid")
         self.console.print(mermaid_diagram)
         self.console.print("```")
+        self.console.print("\n[blue]View or edit this diagram at: https://mermaidchart.com[/blue]")
         
         return design_data 
