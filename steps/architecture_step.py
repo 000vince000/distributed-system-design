@@ -44,21 +44,11 @@ class ArchitectureStep(BaseStep):
         """Design system architecture and database schema."""
         self.console.print("\n[bold]Step 4: Architecture Diagramming[/bold]")
         
-        # Extract components and relationships from workflows
+        # Extract components from workflows
         components = set()
-        relationships = set()
-        
         for workflow in design_data.get("workflows", []):
-            steps = workflow["steps"]
-            for i in range(len(steps)):
-                # Extract component name from step
-                step = steps[i]["step"].strip().lower()
-                components.add(step)
-                
-                # If there's a next step, create a relationship
-                if i < len(steps) - 1:
-                    next_step = steps[i + 1]["step"].strip().lower()
-                    relationships.add((step, next_step))
+            for step in workflow["steps"]:
+                components.add(step["step"].strip().lower())
         
         if not components:
             self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
@@ -93,8 +83,41 @@ class ArchitectureStep(BaseStep):
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
         described_relationships = []
-        for i, (source, target) in enumerate(sorted(relationships), 1):
-            self.console.print(f"\n{i}. {source} -> {target}")
+        components_list = sorted(components)
+        
+        while True:
+            # Show available components
+            self.console.print("\n[bold]Available components:[/bold]")
+            for i, comp in enumerate(components_list, 1):
+                self.console.print(f"{i}. {comp} ({component_types[comp]})")
+            self.console.print("x. Done defining relationships")
+            
+            # Get relationship in format "source->target"
+            self.console.print("\nEnter relationship in format 'source->target' (e.g., '1->3')")
+            relationship = self.prompt.ask(
+                "Select relationship (or 'x' to finish)"
+            )
+            
+            if relationship.lower() == 'x':
+                break
+                
+            try:
+                source_idx, target_idx = relationship.split('->')
+                source_idx = int(source_idx.strip())
+                target_idx = int(target_idx.strip())
+                
+                if not (1 <= source_idx <= len(components_list) and 1 <= target_idx <= len(components_list)):
+                    self.console.print("[red]Invalid component numbers. Please use numbers from the list above.[/red]")
+                    continue
+                    
+                source = components_list[source_idx - 1]
+                target = components_list[target_idx - 1]
+            except (ValueError, IndexError):
+                self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
+                continue
+            
+            # Get relationship details
+            self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
             description = self._get_multi_line_input(
                 "Enter relationship description (x to finish):",
                 "x"
@@ -125,15 +148,34 @@ class ArchitectureStep(BaseStep):
                 "description": description,
                 "protocol": protocol
             })
+            
+            # Show current relationships
+            if described_relationships:
+                self.console.print("\n[bold]Current Relationships:[/bold]")
+                for rel in described_relationships:
+                    self.console.print(f"- {rel['relationship']}")
+                    self.console.print(f"  Description: {rel['description']}")
+                    self.console.print(f"  Protocol: {rel['protocol']}")
         
-        # Only ask for database schema if we have Database or Cache components
+        # Get database schema for each Database and Cache component
         schema = []
-        if any(t in ["Database", "Cache"] for t in component_types.values()):
-            self.console.print("\n[bold]Enter database schema:[/bold]")
-            schema = self._get_multi_line_input(
-                "Enter database tables (TableName: field1:type, field2:type, ...) (x to finish):",
-                "x"
-            )
+        storage_components = {comp: type_ for comp, type_ in component_types.items() 
+                            if type_ in ["Database", "Cache"]}
+        
+        if storage_components:
+            self.console.print("\n[bold]Enter database schema for each storage component:[/bold]")
+            for comp, type_ in storage_components.items():
+                self.console.print(f"\n[bold]{type_} Schema for {comp}:[/bold]")
+                self.console.print("Enter tables (TableName: field1:type, field2:type, ...)")
+                self.console.print("Example: Users: id:int, username:string, email:string")
+                self.console.print("Enter 'x' when done with this component")
+                
+                component_schema = self._get_multi_line_input(
+                    f"Enter schema for {comp} (x to finish):",
+                    "x"
+                )
+                if component_schema:
+                    schema.extend([f"{comp}: {table}" for table in component_schema])
         
         # Store architecture design
         design_data["architecture"] = {
@@ -144,7 +186,7 @@ class ArchitectureStep(BaseStep):
         
         # Generate and display Mermaid diagram
         mermaid_diagram = self._generate_mermaid_diagram(design_data)
-        self.console.print("\n[bold]Architecture Diagram:[/bold]")
+        self.console.print("\n[bold]Generated Architecture Diagram:[/bold]")
         self.console.print("```mermaid")
         self.console.print(mermaid_diagram)
         self.console.print("```")
