@@ -17,16 +17,16 @@ class ApiStep(BaseStep):
             for i, req in enumerate(remaining_reqs, 1):
                 self.console.print(f"{i}. {req}")
             
-            self.console.print(f"{len(remaining_reqs) + 1}. Done with all requirements")
+            self.console.print("x. Done with all requirements")
             
             choice = self.prompt.ask(
                 "Select a requirement to design APIs for",
-                choices=[str(i) for i in range(1, len(remaining_reqs) + 2)]
+                choices=[str(i) for i in range(1, len(remaining_reqs) + 1)] + ["x"]
             )
             
-            if int(choice) == len(remaining_reqs) + 1:
+            if choice == "x":
                 break
-                
+            
             selected_req = remaining_reqs[int(choice) - 1]
             
             # Get API type

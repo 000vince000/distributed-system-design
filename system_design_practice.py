@@ -292,6 +292,21 @@ class SystemDesignPractice:
             self.console.print(f"[yellow]Warning: Could not generate diagram: {str(e)}[/yellow]")
             return "graph TD\n    A[Error generating diagram]"
 
+    def _format_edge_case_section(self, section_title, items, is_failure=False):
+        lines = [f"### {section_title}"]
+        for item in items:
+            name = item['failure'] if is_failure else item['edge_case']
+            lines.append(f"- {name}")
+            if item.get('prevention'):
+                lines.append(f"  - Prevention:")
+                for p in item['prevention']:
+                    lines.append(f"    - {p}")
+            if item.get('mitigation'):
+                lines.append(f"  - Mitigation:")
+                for m in item['mitigation']:
+                    lines.append(f"    - {m}")
+        return '\n'.join(lines)
+
     def generate_report(self):
         """Generate the final report."""
         try:
@@ -335,24 +350,24 @@ class SystemDesignPractice:
             edge_cases = []
             if "edge_cases" in self.current_design:
                 if "edge_cases" in self.current_design["edge_cases"]:
-                    edge_cases.append("### General Edge Cases")
-                    for case in self.current_design["edge_cases"]["edge_cases"]:
-                        edge_cases.append(f"- {case}")
-                
+                    edge_cases.append(self._format_edge_case_section(
+                        "General Edge Cases",
+                        self.current_design["edge_cases"]["edge_cases"],
+                        is_failure=False
+                    ))
                 if "small_scale" in self.current_design["edge_cases"]:
-                    edge_cases.append("\n### Small Scale Failures")
-                    for failure in self.current_design["edge_cases"]["small_scale"]:
-                        edge_cases.append(f"- {failure['failure']}")
-                        for mitigation in failure['mitigation']:
-                            edge_cases.append(f"  - {mitigation}")
-                
+                    edge_cases.append(self._format_edge_case_section(
+                        "Small Scale Failures",
+                        self.current_design["edge_cases"]["small_scale"],
+                        is_failure=True
+                    ))
                 if "large_scale" in self.current_design["edge_cases"]:
-                    edge_cases.append("\n### Large Scale Failures")
-                    for failure in self.current_design["edge_cases"]["large_scale"]:
-                        edge_cases.append(f"- {failure['failure']}")
-                        for mitigation in failure['mitigation']:
-                            edge_cases.append(f"  - {mitigation}")
-            edge_cases_str = "\n".join(edge_cases)
+                    edge_cases.append(self._format_edge_case_section(
+                        "Large Scale Failures",
+                        self.current_design["edge_cases"]["large_scale"],
+                        is_failure=True
+                    ))
+            edge_cases_str = "\n\n".join(edge_cases)
 
             report = f"""# System Design Practice Report
 

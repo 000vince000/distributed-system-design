@@ -41,17 +41,17 @@ class WorkflowStep(BaseStep):
             design_data["workflows"] = []
 
         while True:
-            # Only show 'done' option if at least one workflow is defined
+            # Only show 'x' option if at least one workflow is defined
             choices = [str(i) for i in range(1, len(api_choices) + 1)]
             if design_data["workflows"]:
-                choices.append("done")
+                choices.append("x")
             
             choice = self.prompt.ask(
-                "Select an API to design its workflow" + (" (or 'done' to finish)" if design_data["workflows"] else ""),
+                "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
                 choices=choices
             )
             
-            if choice == "done":
+            if choice == "x":
                 break
                 
             selected_api = api_choices[int(choice) - 1]
@@ -117,6 +117,6 @@ class WorkflowStep(BaseStep):
             # Update choices to only include available APIs
             choices = [str(i) for i, _ in available_apis]
             if design_data["workflows"]:
-                choices.append("done")
+                choices.append("x")
         
         return design_data 
