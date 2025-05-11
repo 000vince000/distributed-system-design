@@ -34,10 +34,13 @@ class EdgeCasesStep(BaseStep):
             
             # Get user's selection
             choices = list(available_failures.keys()) + ['x']
-            selected = self.prompt.ask(
-                "Select a failure (or 'x' to finish):",
-                choices=choices
-            )
+            prompt_kwargs = {
+                "prompt": f"Select a failure (or 'x' to finish):",
+                "choices": choices
+            }
+            if len(choices) == 2:  # Only one failure + 'x'
+                prompt_kwargs["default"] = choices[0]
+            selected = self.prompt.ask(**prompt_kwargs)
             
             if selected == 'x':
                 break

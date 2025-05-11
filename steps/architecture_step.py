@@ -38,6 +38,29 @@ class ArchitectureStep(BaseStep):
             else:  # Other protocol
                 diagram.append(f"    {source} -->|{label}| {target}")
         
+        # Add database and cache schema as subgraphs
+        if "database_schema" in design_data["architecture"]:
+            from collections import defaultdict
+            storage_tables = defaultdict(list)
+            for entry in design_data["architecture"]["database_schema"]:
+                if ":" in entry:
+                    storage, table = entry.split(":", 1)
+                    storage = storage.strip()
+                    table = table.strip()
+                    storage_tables[storage].append(table)
+            for storage, tables in storage_tables.items():
+                subgraph_name = f"Schema for {storage}"
+                diagram.append(f"    subgraph \"{subgraph_name}\"")
+                table_nodes = []
+                for idx, table in enumerate(tables):
+                    node_name = f"{storage}_table{idx}"
+                    diagram.append(f"        {node_name}[\"{table}\"]")
+                    table_nodes.append(node_name)
+                diagram.append(f"    end")
+                # Connect storage node (db or cache) to each table node with a solid line
+                for node_name in table_nodes:
+                    diagram.append(f"    {storage} --- {node_name}")
+        
         return "\n".join(diagram)
 
     def execute(self, design_data):

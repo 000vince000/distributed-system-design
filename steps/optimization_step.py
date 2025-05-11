@@ -110,10 +110,13 @@ class OptimizationStep(BaseStep):
             
             # Let user select a component
             choices = [str(i) for i in range(1, len(remaining_components) + 1)]
-            choice = self.prompt.ask(
-                "Select a component to optimize:",
-                choices=choices
-            )
+            prompt_kwargs = {
+                "prompt": "Select a component to optimize:",
+                "choices": choices
+            }
+            if len(choices) == 1:
+                prompt_kwargs["default"] = choices[0]
+            choice = self.prompt.ask(**prompt_kwargs)
             
             # Get the selected component
             component = remaining_components[int(choice) - 1]
@@ -122,13 +125,31 @@ class OptimizationStep(BaseStep):
             # Get optimizations for this component
             component_optimizations = []
             while True:
-                category = self._select_optimization_category()
+                # Category selection
+                cat_choices = list(self.optimization_options.keys()) + ["x"]
+                cat_prompt_kwargs = {
+                    "prompt": "Select optimization category:",
+                    "choices": cat_choices
+                }
+                if len(cat_choices) == 2:  # Only one category + 'x'
+                    cat_prompt_kwargs["default"] = cat_choices[0]
+                category = self.prompt.ask(**cat_prompt_kwargs)
                 if category == "x":
                     break
-                
-                selected_options = self._select_optimization_options(category)
-                for option in selected_options:
-                    component_optimizations.append(f"{self.optimization_options[category]['name']}: {option}")
+                # Option selection
+                options = self.optimization_options[category]["options"]
+                opt_choices = list(options.keys())
+                opt_prompt_kwargs = {
+                    "prompt": f"Select {self.optimization_options[category]['name']} optimizations:",
+                    "choices": opt_choices
+                }
+                if len(opt_choices) == 1:
+                    opt_prompt_kwargs["default"] = opt_choices[0]
+                selected = self.prompt.ask(**opt_prompt_kwargs)
+                selected_indices = [x.strip() for x in selected.split(",")]
+                for idx in selected_indices:
+                    if idx in options:
+                        component_optimizations.append(f"{self.optimization_options[category]['name']}: {options[idx]}")
             
             if component_optimizations:
                 all_optimizations.append(f"Component: {component}")

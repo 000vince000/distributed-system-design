@@ -46,10 +46,14 @@ class WorkflowStep(BaseStep):
             if design_data["workflows"]:
                 choices.append("x")
             
-            choice = self.prompt.ask(
-                "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
-                choices=choices
-            )
+            prompt_kwargs = {
+                "prompt": "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
+                "choices": choices
+            }
+            if len(choices) == 1:
+                prompt_kwargs["default"] = choices[0]
+            
+            choice = self.prompt.ask(**prompt_kwargs)
             
             if choice == "x":
                 break
@@ -118,5 +122,11 @@ class WorkflowStep(BaseStep):
             choices = [str(i) for i, _ in available_apis]
             if design_data["workflows"]:
                 choices.append("x")
+            prompt_kwargs = {
+                "prompt": "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
+                "choices": choices
+            }
+            if len(choices) == 1:
+                prompt_kwargs["default"] = choices[0]
         
         return design_data 

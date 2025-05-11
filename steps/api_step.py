@@ -19,10 +19,14 @@ class ApiStep(BaseStep):
             
             self.console.print("x. Done with all requirements")
             
-            choice = self.prompt.ask(
-                "Select a requirement to design APIs for",
-                choices=[str(i) for i in range(1, len(remaining_reqs) + 1)] + ["x"]
-            )
+            choices = [str(i) for i in range(1, len(remaining_reqs) + 1)] + ["x"]
+            prompt_kwargs = {
+                "prompt": "Select a requirement to design APIs for",
+                "choices": choices
+            }
+            if len(choices) == 2:  # Only one requirement + 'x'
+                prompt_kwargs["default"] = choices[0]
+            choice = self.prompt.ask(**prompt_kwargs)
             
             if choice == "x":
                 break
@@ -31,15 +35,15 @@ class ApiStep(BaseStep):
             
             # Get API type
             self.console.print(f"\n[bold]Designing APIs for: {selected_req}[/bold]")
-            self.console.print("1. Internal API")
-            self.console.print("2. External API")
+            self.console.print("1. External API")
+            self.console.print("2. Internal API")
             
             api_type = self.prompt.ask(
                 "Select API type",
                 choices=["1", "2"]
             )
             
-            api_type_name = "internal" if api_type == "1" else "external"
+            api_type_name = "external" if api_type == "1" else "internal"
             api = self._get_multi_line_input(
                 f"Enter {api_type_name} API endpoint for '{selected_req}'",
                 "x"
