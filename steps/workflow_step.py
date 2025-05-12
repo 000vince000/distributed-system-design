@@ -18,7 +18,7 @@ class WorkflowStep(BaseStep):
                         # Format request/response summary
                         req_summary = "{}" if not api["request"] else " ".join(api["request"])
                         resp_summary = "{}" if not api["response"] else " ".join(api["response"])
-                        api_choices.append((f"Internal: {api['endpoint']} {req_summary}->{resp_summary}", api, req))
+                        api_choices.append((f"Internal: {api['endpoint']} {req_summary}->{resp_summary}", api, req, "internal"))
             if design_data["apis"]["external"]:
                 for api in design_data["apis"]["external"]:
                     if api["endpoint"] not in seen_apis:
@@ -26,7 +26,7 @@ class WorkflowStep(BaseStep):
                         # Format request/response summary
                         req_summary = "{}" if not api["request"] else " ".join(api["request"])
                         resp_summary = "{}" if not api["response"] else " ".join(api["response"])
-                        api_choices.append((f"External: {api['endpoint']} {req_summary}->{resp_summary}", api, req))
+                        api_choices.append((f"External: {api['endpoint']} {req_summary}->{resp_summary}", api, req, "external"))
 
         if not api_choices:
             self.console.print("[yellow]No APIs defined yet. Please define APIs first.[/yellow]")
@@ -50,18 +50,18 @@ class WorkflowStep(BaseStep):
 
         # Filter out APIs that already have workflows
         available_apis = []
-        for i, (api_desc, api, req) in enumerate(api_choices, 1):
+        for i, (api_desc, api, req, api_type) in enumerate(api_choices, 1):
             # Check if this API already has a workflow
             if not any(w["api"] == api["endpoint"] for w in design_data["workflows"]):
-                available_apis.append((i, api_desc, api, req))
+                available_apis.append((i, api_desc, api, req, api_type))
 
         if not available_apis:
             self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
             return design_data
 
         self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
-        for i, api_desc, _, _ in available_apis:
-            self.console.print(f"{i}. {api_desc}")
+        for i, api_desc, _, _, api_type in available_apis:
+            self.console.print(f"{i}. {api_desc} ({api_type})")
 
         while True:
             # Only show 'x' option if at least one workflow is defined
@@ -82,7 +82,7 @@ class WorkflowStep(BaseStep):
                 break
                 
             selected_api = available_apis[int(choice) - 1]
-            _, api_desc, api, req = selected_api
+            _, api_desc, api, req, api_type = selected_api
             
             self.console.print(f"\n[bold]Designing workflow for: {api_desc}[/bold]")
             self.console.print(f"Requirement: {req}")
@@ -109,7 +109,8 @@ class WorkflowStep(BaseStep):
             workflow = {
                 "api": api["endpoint"],
                 "requirement": req,
-                "steps": step_definitions
+                "steps": step_definitions,
+                "type": api_type  # Add API type to workflow
             }
             
             design_data["workflows"].append(workflow)
@@ -127,10 +128,10 @@ class WorkflowStep(BaseStep):
             
             # Update available APIs list
             available_apis = []
-            for i, (api_desc, api, req) in enumerate(api_choices, 1):
+            for i, (api_desc, api, req, api_type) in enumerate(api_choices, 1):
                 # Check if this API already has a workflow
                 if not any(w["api"] == api["endpoint"] for w in design_data["workflows"]):
-                    available_apis.append((i, api_desc, api, req))
+                    available_apis.append((i, api_desc, api, req, api_type))
             
             if not available_apis:
                 self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
@@ -138,7 +139,7 @@ class WorkflowStep(BaseStep):
                 
             # Display available APIs again before next selection
             self.console.print("\n[bold]Available APIs:[/bold]")
-            for i, api_desc, _, _ in available_apis:
-                self.console.print(f"{i}. {api_desc}")
+            for i, api_desc, _, _, api_type in available_apis:
+                self.console.print(f"{i}. {api_desc} ({api_type})")
         
         return design_data 
