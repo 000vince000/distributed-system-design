@@ -1,0 +1,1 @@
+design wikipedia at scale. support both anonymous users (create, edit) and admins (CRUD). Resolve concurrent edits.
