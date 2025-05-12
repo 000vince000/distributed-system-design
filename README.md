@@ -81,7 +81,29 @@ python system_design_practice.py
    - All your inputs organized by category
    - A mermaid diagram showing component relationships
    - Total time taken for the design session
-   - The report will be saved as `design_report_YYYYMMDD_HHMMSS.md`
+   - The report will be saved as `design_reports/design_report_{question_name}_{timestamp}.md`
+
+### Advanced Usage
+
+#### Resuming Partial Designs
+The tool automatically saves your progress after each step. You can resume from any saved point:
+
+1. List available partial designs:
+```bash
+ls design_reports/partial_design_*
+```
+
+2. Resume from a partial design:
+```bash
+python system_design_practice.py --load-partial design_reports/partial_design_facebook_newsfeed_step2_20240321_143022.json
+```
+
+#### Using Stub Data
+To practice specific steps using pre-defined data:
+```bash
+python system_design_practice.py --start-step 3
+```
+Note: When using stub data, partial designs are not saved.
 
 ### Workflow Format
 

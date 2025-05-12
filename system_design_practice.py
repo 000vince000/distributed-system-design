@@ -228,6 +228,55 @@ class SystemDesignPractice:
             self.console.print(f"[red]Error starting session: {str(e)}[/red]")
             raise
 
+    def _save_partial_design(self, step_number: int):
+        """Save partial design after completing a step."""
+        if not hasattr(self, 'start_time') or self.start_time is None:
+            return  # Don't save if using stubs
+            
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        question_name = self.current_design['question'].lower()
+        question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
+        question_name = question_name.replace(' ', '_')
+        question_name = question_name[:50]
+        
+        filename = f"design_reports/partial_design_{question_name}_step{step_number}_{timestamp}.json"
+        
+        # Save the current state
+        with open(filename, 'w') as f:
+            json.dump({
+                'step': step_number,
+                'design': self.current_design,
+                'start_time': self.start_time
+            }, f, indent=2)
+        
+        self.console.print(f"\n[yellow]Partial design saved to: {filename}[/yellow]")
+
+    def _load_partial_design(self, filename: str):
+        """Load a partial design from file."""
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+                self.current_design = data['design']
+                self.start_time = data['start_time']
+                return data['step']
+        except Exception as e:
+            self.console.print(f"[red]Error loading partial design: {str(e)}[/red]")
+            return 1
+
+    def _cleanup_partial_files(self, question_name: str):
+        """Clean up partial files for the current design."""
+        try:
+            question_name = question_name.lower()
+            question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
+            question_name = question_name.replace(' ', '_')
+            question_name = question_name[:50]
+            
+            for filename in os.listdir("design_reports"):
+                if filename.startswith(f"partial_design_{question_name}_") and filename.endswith(".json"):
+                    os.remove(os.path.join("design_reports", filename))
+        except Exception as e:
+            self.console.print(f"[yellow]Warning: Could not clean up partial files: {str(e)}[/yellow]")
+
     def select_design_question(self, start_step: int = 1):
         """Select a design question to work on."""
         if not self.current_design["question"]:
@@ -243,7 +292,11 @@ class SystemDesignPractice:
         # Execute steps starting from the specified step
         for i, step in enumerate(self.steps[start_step-1:], start=start_step):
             self.current_design = step.execute(self.current_design)
+            # Save partial design after each step
+            self._save_partial_design(i)
         
+        # Clean up partial files after generating final report
+        self._cleanup_partial_files(self.current_design["question"])
         self.generate_report()
 
     def generate_mermaid_diagram(self):
@@ -435,10 +488,18 @@ def main():
     parser = argparse.ArgumentParser(description='System Design Practice Tool')
     parser.add_argument('--start-step', type=int, default=1,
                       help='Start from a specific step (1-6) using stub data')
+    parser.add_argument('--load-partial', type=str,
+                      help='Load a partial design file to resume from')
     args = parser.parse_args()
     
     practice = SystemDesignPractice()
-    practice.start(args.start_step)
+    
+    if args.load_partial:
+        # Load partial design and start from the next step
+        next_step = practice._load_partial_design(args.load_partial)
+        practice.start(next_step)
+    else:
+        practice.start(args.start_step)
 
 if __name__ == "__main__":
     main() 
