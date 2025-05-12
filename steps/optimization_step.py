@@ -139,15 +139,18 @@ class OptimizationStep(BaseStep):
             self.console.print("\n[bold]Remaining components to optimize:[/bold]")
             for i, comp in enumerate(remaining_components, 1):
                 self.console.print(f"{i}. {comp}")
+            self.console.print("x. Finish")
             # Let user select a component
-            choices = [str(i) for i in range(1, len(remaining_components) + 1)]
+            choices = [str(i) for i in range(1, len(remaining_components) + 1)] + ["x"]
             prompt_kwargs = {
-                "prompt": "Select a component to optimize:",
+                "prompt": "Select a component to optimize (or 'x' to finish):",
                 "choices": choices
             }
-            if len(choices) == 1:
+            if len(choices) == 2:  # Only one component + 'x'
                 prompt_kwargs["default"] = choices[0]
             choice = self.prompt.ask(**prompt_kwargs)
+            if choice == "x":
+                break
             component = remaining_components[int(choice) - 1]
             self.console.print(f"\n[bold]Optimizing component: {component}[/bold]")
             # NFR selection
@@ -178,9 +181,10 @@ class OptimizationStep(BaseStep):
                 cat_key = nfr_to_cat.get(nfr.strip().lower())
                 if cat_key and cat_key in self.optimization_options:
                     cat = self.optimization_options[cat_key]
-                    self.console.print(f"[bold]Select subcategory(ies) for {nfr} (comma-separated numbers):[/bold]")
+                    self.console.print(f"[bold]Select subcategory(ies) for {nfr} (comma-separated numbers, or 'x' to skip):[/bold]")
                     for k, v in cat["options"].items():
                         self.console.print(f"{k}. {v}")
+                    self.console.print("x. Skip")
                     subcat_choices = list(cat["options"].keys()) + ["x"]
                     subcat_prompt_kwargs = {
                         "prompt": f"Select subcategory(ies) (comma-separated numbers, or 'x' to skip):",
@@ -198,8 +202,17 @@ class OptimizationStep(BaseStep):
                             f"Enter details for {subcat} (one per line, x to finish):",
                             "x"
                         )
-                        for detail in details:
-                            component_optimizations.append(f"{nfr} / {subcat}: {detail}")
+                        # Combine multiple lines into a single explanation
+                        explanation = " ".join(details)
+                        component_optimizations.append(f"{nfr} / {subcat}: {explanation}")
+                        # Prompt for trade-offs for this subcategory
+                        tradeoffs = self._get_multi_line_input(
+                            f"Enter trade-offs for {subcat} (one per line, x to finish):",
+                            "x"
+                        )
+                        # Combine multiple lines into a single trade-offs consideration
+                        tradeoff = " ".join(tradeoffs)
+                        component_optimizations.append(f"{nfr} / {subcat} / Trade-offs: {tradeoff}")
                 else:
                     # No mapped subcategory, just prompt for free text
                     self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")

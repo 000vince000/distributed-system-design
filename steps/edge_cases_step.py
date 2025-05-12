@@ -91,7 +91,7 @@ class EdgeCasesStep(BaseStep):
             }
         
         # Get general edge cases
-        self.console.print("\n[bold]Edge Cases[/bold]")
+        self.console.print("\n[bold]Step 6: Edge Cases[/bold]")
         edge_cases = self._get_multi_line_input(
             "Enter general edge cases (one per line, x to finish):",
             "x"
