@@ -32,17 +32,40 @@ class WorkflowStep(BaseStep):
             self.console.print("[yellow]No APIs defined yet. Please define APIs first.[/yellow]")
             return design_data
 
-        self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
-        for i, (api_desc, _, _) in enumerate(api_choices, 1):
-            self.console.print(f"{i}. {api_desc}")
-
         # Initialize workflows list if it doesn't exist
         if "workflows" not in design_data:
             design_data["workflows"] = []
 
+        # Show existing workflows if any
+        if design_data["workflows"]:
+            self.console.print("\n[bold]Existing Workflows:[/bold]")
+            for workflow in design_data["workflows"]:
+                self.console.print(f"\nAPI: {workflow['api']}")
+                self.console.print(f"Requirement: {workflow['requirement']}")
+                self.console.print("Steps:")
+                for step in workflow["steps"]:
+                    self.console.print(f"  {step['step']}")
+                    for substep in step["substeps"]:
+                        self.console.print(f"    - {substep}")
+
+        # Filter out APIs that already have workflows
+        available_apis = []
+        for i, (api_desc, api, req) in enumerate(api_choices, 1):
+            # Check if this API already has a workflow
+            if not any(w["api"] == api["endpoint"] for w in design_data["workflows"]):
+                available_apis.append((i, api_desc, api, req))
+
+        if not available_apis:
+            self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
+            return design_data
+
+        self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
+        for i, api_desc, _, _ in available_apis:
+            self.console.print(f"{i}. {api_desc}")
+
         while True:
             # Only show 'x' option if at least one workflow is defined
-            choices = [str(i) for i in range(1, len(api_choices) + 1)]
+            choices = [str(i) for i in range(1, len(available_apis) + 1)]
             if design_data["workflows"]:
                 choices.append("x")
             
@@ -58,8 +81,8 @@ class WorkflowStep(BaseStep):
             if choice == "x":
                 break
                 
-            selected_api = api_choices[int(choice) - 1]
-            api_desc, api, req = selected_api
+            selected_api = available_apis[int(choice) - 1]
+            _, api_desc, api, req = selected_api
             
             self.console.print(f"\n[bold]Designing workflow for: {api_desc}[/bold]")
             self.console.print(f"Requirement: {req}")
@@ -102,31 +125,20 @@ class WorkflowStep(BaseStep):
                     for substep in step_def["substeps"]:
                         self.console.print(f"    - {substep}")
             
-            # Display available APIs again before next selection
-            self.console.print("\n[bold]Available APIs:[/bold]")
-            # Filter out APIs that already have workflows
+            # Update available APIs list
             available_apis = []
             for i, (api_desc, api, req) in enumerate(api_choices, 1):
                 # Check if this API already has a workflow
                 if not any(w["api"] == api["endpoint"] for w in design_data["workflows"]):
-                    available_apis.append((i, api_desc))
+                    available_apis.append((i, api_desc, api, req))
             
             if not available_apis:
-                self.console.print("[yellow]No more APIs available to design workflows for.[/yellow]")
+                self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
                 break
                 
-            for i, api_desc in available_apis:
+            # Display available APIs again before next selection
+            self.console.print("\n[bold]Available APIs:[/bold]")
+            for i, api_desc, _, _ in available_apis:
                 self.console.print(f"{i}. {api_desc}")
-            
-            # Update choices to only include available APIs
-            choices = [str(i) for i, _ in available_apis]
-            if design_data["workflows"]:
-                choices.append("x")
-            prompt_kwargs = {
-                "prompt": "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
-                "choices": choices
-            }
-            if len(choices) == 1:
-                prompt_kwargs["default"] = choices[0]
         
         return design_data 

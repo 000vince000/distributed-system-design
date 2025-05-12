@@ -203,7 +203,7 @@ class SystemDesignPractice:
             self.console.print(Panel.fit("System Design Practice Tool", style="bold blue"))
             
             # If starting from a specific step, load stub data
-            if start_step > 1:
+            if start_step > 1 and not hasattr(self, 'current_design') or not self.current_design.get("question"):
                 stub_functions = {
                     2: get_step1_stub,
                     3: get_step2_stub,
@@ -222,6 +222,12 @@ class SystemDesignPractice:
                 else:
                     self.console.print("[red]Invalid start step number[/red]")
                     return
+            elif start_step > 1:
+                # When loading from partial file, show summaries of previous steps
+                self.console.print(f"\n[bold]Resuming from Step {start_step}[/bold]")
+                self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
+                for step in range(1, start_step):
+                    self._display_stub_summary(step)
             
             self.select_design_question(start_step)
         except Exception as e:
@@ -234,14 +240,25 @@ class SystemDesignPractice:
             return  # Don't save if using stubs
             
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        question_name = self.current_design['question'].lower()
-        question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
+        
+        # Get question filename from the first line of the question
+        question_first_line = self.current_design['question'].split('\n')[0].lower()
+        question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_first_line)
         question_name = question_name.replace(' ', '_')
-        question_name = question_name[:50]
+        question_name = question_name[:30]  # Shorter max length
         
-        filename = f"design_reports/partial_design_{question_name}_step{step_number}_{timestamp}.json"
+        # Delete any existing partial files for this question
+        try:
+            for filename in os.listdir("design_reports"):
+                if filename.startswith(f"partial_{question_name}_") and filename.endswith(".json"):
+                    filepath = os.path.join("design_reports", filename)
+                    os.remove(filepath)
+                    self.console.print(f"[yellow]Deleted old partial file: {filename}[/yellow]")
+        except Exception as e:
+            self.console.print(f"[yellow]Warning: Could not clean up old partial files: {str(e)}[/yellow]")
         
-        # Save the current state
+        # Save new partial file
+        filename = f"design_reports/partial_{question_name}_step{step_number}_{timestamp}.json"
         with open(filename, 'w') as f:
             json.dump({
                 'step': step_number,
