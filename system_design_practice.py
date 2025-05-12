@@ -312,7 +312,19 @@ class SystemDesignPractice:
         try:
             elapsed_time = time.time() - self.start_time
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"design_report_{timestamp}.md"
+            
+            # Create design_reports directory if it doesn't exist
+            os.makedirs("design_reports", exist_ok=True)
+            
+            # Create a more descriptive filename from the question
+            question_name = self.current_design['question'].lower()
+            # Remove special characters and replace spaces with underscores
+            question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
+            question_name = question_name.replace(' ', '_')
+            # Truncate if too long
+            question_name = question_name[:50]
+            
+            filename = f"design_reports/design_report_{question_name}_{timestamp}.md"
 
             # Generate mermaid diagram
             mermaid_diagram = self.generate_mermaid_diagram()
