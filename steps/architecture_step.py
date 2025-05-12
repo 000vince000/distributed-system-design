@@ -159,11 +159,12 @@ class ArchitectureStep(BaseStep):
             self.console.print("1. HTTP")
             self.console.print("2. gRPC")
             self.console.print("3. WebSocket")
-            self.console.print("4. Other")
+            self.console.print("4. Query")
+            self.console.print("5. Other")
             
             protocol_choice = self.prompt.ask(
                 "Select protocol",
-                choices=["1", "2", "3", "4"]
+                choices=["1", "2", "3", "4", "5"]
             )
             
             # Map choice to protocol
@@ -171,7 +172,8 @@ class ArchitectureStep(BaseStep):
                 "1": "HTTP",
                 "2": "gRPC",
                 "3": "WebSocket",
-                "4": "Other"
+                "4": "Query",
+                "5": "Other"
             }
             protocol = protocol_map[protocol_choice]
             
