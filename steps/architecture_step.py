@@ -149,10 +149,11 @@ class ArchitectureStep(BaseStep):
             
             # Get relationship details
             self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
-            description = self._get_multi_line_input(
+            description_lines = self._get_multi_line_input(
                 "Enter relationship description (x to finish):",
                 "x"
-            )[0]
+            )
+            description = description_lines[0] if description_lines else ""
             
             self.console.print("\nSelect protocol:")
             self.console.print("1. HTTP")
