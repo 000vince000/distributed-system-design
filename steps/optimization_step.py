@@ -12,7 +12,8 @@ class OptimizationStep(BaseStep):
                     "2": "Horizontal scaling",
                     "3": "Sharding",
                     "4": "Async processing",
-                    "5": "Read replica"
+                    "5": "Read replica",
+                    "6": "Loose coupling"
                 }
             },
             "2": {
@@ -23,7 +24,8 @@ class OptimizationStep(BaseStep):
                     "3": "Distributed lock",
                     "4": "ACID compliant storage",
                     "5": "FIFO queue",
-                    "6": "Token leasing"
+                    "6": "Token leasing",
+                    "7": "Idempotent operations"
                 }
             },
             "3": {
@@ -101,13 +103,42 @@ class OptimizationStep(BaseStep):
         # Store all optimizations
         all_optimizations = []
         remaining_components = components.copy()
-        
+        nfrs = design_data["requirements"].get("nonfunctional", [])
+        nfr_to_cat = {
+            # Scalability/Availability
+            "scalability": "1",
+            "high availability": "1",
+            "availability": "1",
+            "fault tolerance": "1",
+            "resilience": "1",
+            "reliability": "1",
+            "disaster recovery": "1",
+            # Consistency
+            "consistency": "2",
+            "data consistency": "2",
+            "strong consistency": "2",
+            "eventual consistency": "2",
+            "read-after-write consistency": "2",
+            # Efficiency/Performance
+            "efficiency": "3",
+            "performance": "3",
+            "low latency": "3",
+            "throughput": "3",
+            "resource utilization": "3",
+            "cost efficiency": "3",
+            # User Experience
+            "user experience": "4",
+            "ux": "4",
+            "responsiveness": "4",
+            "usability": "4",
+            "realtime": "4",
+            # Add more as needed
+        }
         while remaining_components:
             # Show remaining components
             self.console.print("\n[bold]Remaining components to optimize:[/bold]")
             for i, comp in enumerate(remaining_components, 1):
                 self.console.print(f"{i}. {comp}")
-            
             # Let user select a component
             choices = [str(i) for i in range(1, len(remaining_components) + 1)]
             prompt_kwargs = {
@@ -117,60 +148,82 @@ class OptimizationStep(BaseStep):
             if len(choices) == 1:
                 prompt_kwargs["default"] = choices[0]
             choice = self.prompt.ask(**prompt_kwargs)
-            
-            # Get the selected component
             component = remaining_components[int(choice) - 1]
             self.console.print(f"\n[bold]Optimizing component: {component}[/bold]")
-            
-            # Get optimizations for this component
+            # NFR selection
+            if not nfrs:
+                self.console.print("[yellow]No non-functional requirements defined. Please define requirements first.[/yellow]")
+                break
+            self.console.print("\n[bold]Select NFR(s) to optimize for this component:[/bold]")
+            for i, nfr in enumerate(nfrs, 1):
+                self.console.print(f"{i}. {nfr}")
+            self.console.print(f"x. Done")
+            nfr_choices = [str(i) for i in range(1, len(nfrs) + 1)] + ["x"]
+            nfr_prompt_kwargs = {
+                "prompt": "Select NFR(s) (comma-separated numbers, or 'x' to finish):",
+                "choices": nfr_choices
+            }
+            if len(nfr_choices) == 2:  # Only one NFR + 'x'
+                nfr_prompt_kwargs["default"] = nfr_choices[0]
+            nfr_selected = self.prompt.ask(**nfr_prompt_kwargs)
+            if nfr_selected == "x":
+                remaining_components.remove(component)
+                continue
+            nfr_indices = [int(x.strip()) for x in nfr_selected.split(",") if x.strip().isdigit() and 1 <= int(x.strip()) <= len(nfrs)]
+            selected_nfrs = [nfrs[i-1] for i in nfr_indices]
             component_optimizations = []
-            while True:
-                # Category selection
-                cat_choices = list(self.optimization_options.keys()) + ["x"]
-                cat_prompt_kwargs = {
-                    "prompt": "Select optimization category:",
-                    "choices": cat_choices
-                }
-                if len(cat_choices) == 2:  # Only one category + 'x'
-                    cat_prompt_kwargs["default"] = cat_choices[0]
-                category = self.prompt.ask(**cat_prompt_kwargs)
-                if category == "x":
-                    break
-                # Option selection
-                options = self.optimization_options[category]["options"]
-                opt_choices = list(options.keys())
-                opt_prompt_kwargs = {
-                    "prompt": f"Select {self.optimization_options[category]['name']} optimizations:",
-                    "choices": opt_choices
-                }
-                if len(opt_choices) == 1:
-                    opt_prompt_kwargs["default"] = opt_choices[0]
-                selected = self.prompt.ask(**opt_prompt_kwargs)
-                selected_indices = [x.strip() for x in selected.split(",")]
-                for idx in selected_indices:
-                    if idx in options:
-                        component_optimizations.append(f"{self.optimization_options[category]['name']}: {options[idx]}")
-            
+            for nfr in selected_nfrs:
+                self.console.print(f"\n[bold]Optimizing for NFR: {nfr}[/bold]")
+                # Try to map NFR to a category
+                cat_key = nfr_to_cat.get(nfr.strip().lower())
+                if cat_key and cat_key in self.optimization_options:
+                    cat = self.optimization_options[cat_key]
+                    self.console.print(f"[bold]Select subcategory(ies) for {nfr} (comma-separated numbers):[/bold]")
+                    for k, v in cat["options"].items():
+                        self.console.print(f"{k}. {v}")
+                    subcat_choices = list(cat["options"].keys()) + ["x"]
+                    subcat_prompt_kwargs = {
+                        "prompt": f"Select subcategory(ies) (comma-separated numbers, or 'x' to skip):",
+                        "choices": subcat_choices
+                    }
+                    subcat_selected = self.prompt.ask(**subcat_prompt_kwargs)
+                    if subcat_selected.strip().lower() == "x":
+                        continue
+                    subcat_indices = [x.strip() for x in subcat_selected.split(",") if x.strip() in cat["options"]]
+                    for idx in subcat_indices:
+                        subcat = cat["options"][idx]
+                        self.console.print(f"[dim]You selected: {subcat}[/dim]")
+                        # Prompt for free-text details for this subcategory
+                        details = self._get_multi_line_input(
+                            f"Enter details for {subcat} (one per line, x to finish):",
+                            "x"
+                        )
+                        for detail in details:
+                            component_optimizations.append(f"{nfr} / {subcat}: {detail}")
+                else:
+                    # No mapped subcategory, just prompt for free text
+                    self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")
+                    nfr_opts = self._get_multi_line_input(
+                        "Enter optimizations (one per line, x to finish):",
+                        "x"
+                    )
+                    for opt in nfr_opts:
+                        component_optimizations.append(f"{nfr}: {opt}")
             if component_optimizations:
                 all_optimizations.append(f"Component: {component}")
                 all_optimizations.extend([f"  - {opt}" for opt in component_optimizations])
-            
             # Remove the optimized component from remaining components
             remaining_components.remove(component)
-            
             # Show current optimization summary
             if all_optimizations:
                 self.console.print("\n[bold]Current Optimization Summary:[/bold]")
                 for opt in all_optimizations:
                     self.console.print(opt)
-        
         # Store optimizations in design data
         design_data["optimizations"] = all_optimizations
-        
         # Display final summary
         if all_optimizations:
             self.console.print("\n[bold]Final Optimization Summary:[/bold]")
             for opt in all_optimizations:
                 self.console.print(opt)
-        
         return design_data 
