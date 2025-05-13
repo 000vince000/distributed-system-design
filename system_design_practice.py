@@ -198,42 +198,64 @@ class SystemDesignPractice:
 
     def start(self, start_step: int = 1):
         """Start the system design practice session."""
-        try:
-            self.start_time = time.time()
-            self.console.print(Panel.fit("System Design Practice Tool", style="bold blue"))
-            
-            # If starting from a specific step, load stub data
-            if start_step > 1:
-                if not hasattr(self, 'current_design') or not self.current_design.get("question"):
-                    stub_functions = {
-                        2: get_step1_stub,
-                        3: get_step2_stub,
-                        4: get_step3_stub,
-                        5: get_step4_stub,
-                        6: get_step5_stub
-                    }
-                    if start_step in stub_functions:
-                        self.current_design = stub_functions[start_step]()
-                        self.console.print(f"\n[bold]Starting from Step {start_step} with stub data[/bold]")
-                        
-                        # Display summaries of all previous steps
-                        self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
-                        for step in range(1, start_step):
-                            self._display_stub_summary(step)
-                    else:
-                        self.console.print("[red]Invalid start step number[/red]")
-                        return
-                else:
-                    # When loading from partial file, show summaries of previous steps
-                    self.console.print(f"\n[bold]Resuming from Step {start_step}[/bold]")
-                    self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
-                    for step in range(1, start_step):
-                        self._display_stub_summary(step)
-            
+        self.console.print(Panel.fit("System Design Practice Tool"))
+        
+        # If starting from a specific step, load stub data for previous steps
+        if start_step > 1:
+            if not self.current_design["question"]:
+                # Load stub data for previous steps
+                if start_step == 2:
+                    self.current_design = get_step1_stub()
+                elif start_step == 3:
+                    self.current_design = get_step2_stub()
+                elif start_step == 4:
+                    self.current_design = get_step3_stub()
+                elif start_step == 5:
+                    self.current_design = get_step4_stub()
+                elif start_step == 6:
+                    self.current_design = get_step5_stub()
+        
+        # Select design question if not already set
+        if not self.current_design["question"]:
             self.select_design_question(start_step)
-        except Exception as e:
-            self.console.print(f"[red]Error starting session: {str(e)}[/red]")
-            raise
+        
+        # Display summary of previous steps
+        self.console.print(f"\nResuming from Step {start_step}\n")
+        self.console.print("Previous Steps Summary:\n")
+        
+        for step in range(1, start_step):
+            self._display_stub_summary(step)
+        
+        # Execute steps
+        for i, step in enumerate(self.steps[start_step - 1:], start_step):
+            # Check if step is already completed
+            if i == 4 and "architecture" in self.current_design and self.current_design["architecture"]:
+                self.console.print("\n[bold blue]Step 4: Architecture Summary[/bold blue]")
+                self._display_stub_summary(4)
+                self.console.print("[green]Step 4 (Architecture) is already completed. Moving to step 5.[/green]")
+                continue
+            elif i == 5 and "optimizations" in self.current_design and self.current_design["optimizations"]:
+                self.console.print("[green]Step 5 (Optimizations) is already completed. Moving to step 6.[/green]")
+                continue
+            elif i == 6 and "edge_cases" in self.current_design and self.current_design["edge_cases"]:
+                self.console.print("[green]Step 6 (Edge Cases) is already completed.[/green]")
+                continue
+            
+            self.current_design = step.execute(self.current_design)
+            self._save_partial_design(i)
+            
+            # Ask if user wants to continue
+            if i < len(self.steps):
+                continue_choice = self.prompt.ask(
+                    "\nContinue to next step?",
+                    choices=["y", "n"],
+                    default="y"
+                )
+                if continue_choice == "n":
+                    break
+        
+        # Generate final report
+        self.generate_report()
 
     def _save_partial_design(self, step_number: int):
         """Save partial design after completing a step."""

@@ -95,6 +95,11 @@ class ArchitectureStep(BaseStep):
         """Design system architecture and database schema."""
         self.console.print("\n[bold]Step 4: Architecture Diagramming[/bold]")
         
+        # Check if architecture is already defined
+        if "architecture" in design_data and design_data["architecture"]:
+            self.console.print("[green]Architecture is already defined. Moving to next step.[/green]")
+            return design_data
+        
         # Extract components from workflows
         components = set()
         for workflow in design_data.get("workflows", []):
