@@ -68,12 +68,12 @@ class ApiStep(BaseStep):
                 "response": response_def
             }
             
-            if api_type == "1":
-                design_data["apis"]["internal"].append(api_definition)
-                requirement_apis[selected_req]["internal"] = api_definition
-            else:
+            if api_type == "1":  # External API
                 design_data["apis"]["external"].append(api_definition)
                 requirement_apis[selected_req]["external"] = api_definition
+            else:  # Internal API
+                design_data["apis"]["internal"].append(api_definition)
+                requirement_apis[selected_req]["internal"] = api_definition
             
             # Remove the addressed requirement
             remaining_reqs.pop(int(choice) - 1)

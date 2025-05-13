@@ -71,6 +71,26 @@ class ArchitectureStep(BaseStep):
         
         return "\n".join(diagram)
 
+    def _infer_relationships_from_workflows(self, design_data):
+        """Infer relationships from workflow steps."""
+        inferred_relationships = []
+        for workflow in design_data.get("workflows", []):
+            steps = workflow["steps"]
+            for i in range(len(steps) - 1):
+                source = steps[i]["step"].strip()  # Remove .lower() to preserve case
+                target = steps[i + 1]["step"].strip()  # Remove .lower() to preserve case
+                # Only add if not already in the list
+                rel = f"{source} -> {target}"
+                if not any(r["relationship"] == rel for r in inferred_relationships):
+                    # Only set description if source is a Client component
+                    description = workflow["api"] if i == 0 else ""
+                    inferred_relationships.append({
+                        "relationship": rel,
+                        "description": description,
+                        "protocol": "HTTP"  # Default protocol
+                    })
+        return inferred_relationships
+
     def execute(self, design_data):
         """Design system architecture and database schema."""
         self.console.print("\n[bold]Step 4: Architecture Diagramming[/bold]")
@@ -79,7 +99,7 @@ class ArchitectureStep(BaseStep):
         components = set()
         for workflow in design_data.get("workflows", []):
             for step in workflow["steps"]:
-                components.add(step["step"].strip().lower())
+                components.add(step["step"].strip())  # Remove .lower() to preserve case
         
         if not components:
             self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
@@ -90,6 +110,7 @@ class ArchitectureStep(BaseStep):
         component_types = {}
         for comp in sorted(components):
             self.console.print(f"\nSelect type for {comp}:")
+            self.console.print("0. Client")
             self.console.print("1. API")
             self.console.print("2. Service")
             self.console.print("3. Database")
@@ -98,11 +119,13 @@ class ArchitectureStep(BaseStep):
             
             type_choice = self.prompt.ask(
                 "Select type",
-                choices=["1", "2", "3", "4", "5"]
+                choices=["0", "1", "2", "3", "4", "5"],
+                show_choices=True
             )
             
             # Map choice to type
             type_map = {
+                "0": "Client",
                 "1": "API",
                 "2": "Service",
                 "3": "Database",
@@ -111,85 +134,153 @@ class ArchitectureStep(BaseStep):
             }
             component_types[comp] = type_map[type_choice]
         
+        # Infer relationships from workflows
+        described_relationships = self._infer_relationships_from_workflows(design_data)
+        
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
-        described_relationships = []
         components_list = sorted(components)
         
         while True:
+            # Show current relationships
+            if described_relationships:
+                self.console.print("\n[bold]Current Relationships:[/bold]")
+                for i, rel in enumerate(described_relationships, 1):
+                    self.console.print(f"{i}. {rel['relationship']}")
+                    self.console.print(f"   Description: {rel['description']}")
+                    self.console.print(f"   Protocol: {rel['protocol']}")
+            
             # Show available components
             self.console.print("\n[bold]Available components:[/bold]")
             for i, comp in enumerate(components_list, 1):
                 self.console.print(f"{i}. {comp} ({component_types[comp]})")
+            
+            self.console.print("\nOptions:")
+            self.console.print("a. Add new relationship")
+            self.console.print("d. Delete relationship")
+            self.console.print("e. Edit relationship")
             self.console.print("x. Done defining relationships")
             
-            # Get relationship in format "source->target"
-            self.console.print("\nEnter relationship in format 'source->target' (e.g., '1->3')")
-            relationship = self.prompt.ask(
-                "Select relationship (or 'x' to finish)"
+            choice = self.prompt.ask(
+                "Select option",
+                choices=["a", "d", "e", "x"]
             )
             
-            if relationship.lower() == 'x':
+            if choice == "x":
                 break
-                
-            try:
-                source_idx, target_idx = relationship.split('->')
-                source_idx = int(source_idx.strip())
-                target_idx = int(target_idx.strip())
-                
-                if not (1 <= source_idx <= len(components_list) and 1 <= target_idx <= len(components_list)):
-                    self.console.print("[red]Invalid component numbers. Please use numbers from the list above.[/red]")
+            elif choice == "d":
+                if not described_relationships:
+                    self.console.print("[yellow]No relationships to delete.[/yellow]")
                     continue
                     
-                source = components_list[source_idx - 1]
-                target = components_list[target_idx - 1]
-            except (ValueError, IndexError):
-                self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
-                continue
-            
-            # Get relationship details
-            self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
-            description_lines = self._get_multi_line_input(
-                "Enter relationship description (x to finish):",
-                "x"
-            )
-            description = description_lines[0] if description_lines else ""
-            
-            self.console.print("\nSelect protocol:")
-            self.console.print("1. HTTP")
-            self.console.print("2. gRPC")
-            self.console.print("3. WebSocket")
-            self.console.print("4. Query")
-            self.console.print("5. Other")
-            
-            protocol_choice = self.prompt.ask(
-                "Select protocol",
-                choices=["1", "2", "3", "4", "5"]
-            )
-            
-            # Map choice to protocol
-            protocol_map = {
-                "1": "HTTP",
-                "2": "gRPC",
-                "3": "WebSocket",
-                "4": "Query",
-                "5": "Other"
-            }
-            protocol = protocol_map[protocol_choice]
-            
-            described_relationships.append({
-                "relationship": f"{source} -> {target}",
-                "description": description,
-                "protocol": protocol
-            })
-            
-            # Show current relationships
-            if described_relationships:
-                self.console.print("\n[bold]Current Relationships:[/bold]")
-                for rel in described_relationships:
-                    self.console.print(f"- {rel['relationship']}")
-                    self.console.print(f"  Description: {rel['description']}")
-                    self.console.print(f"  Protocol: {rel['protocol']}")
+                rel_idx = self.prompt.ask(
+                    "Enter relationship number to delete",
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                )
+                del described_relationships[int(rel_idx) - 1]
+                self.console.print("[green]Relationship deleted.[/green]")
+                
+            elif choice == "e":
+                if not described_relationships:
+                    self.console.print("[yellow]No relationships to edit.[/yellow]")
+                    continue
+                    
+                rel_idx = self.prompt.ask(
+                    "Enter relationship number to edit",
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                )
+                rel = described_relationships[int(rel_idx) - 1]
+                
+                # Edit description
+                self.console.print(f"\n[bold]Current description: {rel['description']}[/bold]")
+                description_lines = self._get_multi_line_input(
+                    "Enter new description (x to keep current):",
+                    "x"
+                )
+                if description_lines:
+                    rel["description"] = description_lines[0]
+                
+                # Edit protocol
+                self.console.print(f"\n[bold]Current protocol: {rel['protocol']}[/bold]")
+                self.console.print("\nSelect new protocol:")
+                self.console.print("1. HTTP")
+                self.console.print("2. gRPC")
+                self.console.print("3. WebSocket")
+                self.console.print("4. Query")
+                self.console.print("5. Other")
+                
+                protocol_choice = self.prompt.ask(
+                    "Select protocol (x to keep current)",
+                    choices=["1", "2", "3", "4", "5", "x"]
+                )
+                
+                if protocol_choice != "x":
+                    protocol_map = {
+                        "1": "HTTP",
+                        "2": "gRPC",
+                        "3": "WebSocket",
+                        "4": "Query",
+                        "5": "Other"
+                    }
+                    rel["protocol"] = protocol_map[protocol_choice]
+                
+            elif choice == "a":
+                # Get relationship in format "source->target"
+                self.console.print("\nEnter relationship in format 'source->target' (e.g., '1->3')")
+                relationship = self.prompt.ask(
+                    "Select relationship"
+                )
+                
+                try:
+                    source_idx, target_idx = relationship.split('->')
+                    source_idx = int(source_idx.strip())
+                    target_idx = int(target_idx.strip())
+                    
+                    if not (1 <= source_idx <= len(components_list) and 1 <= target_idx <= len(components_list)):
+                        self.console.print("[red]Invalid component numbers. Please use numbers from the list above.[/red]")
+                        continue
+                        
+                    source = components_list[source_idx - 1]
+                    target = components_list[target_idx - 1]
+                except (ValueError, IndexError):
+                    self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
+                    continue
+                
+                # Get relationship details
+                self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
+                description_lines = self._get_multi_line_input(
+                    "Enter relationship description (x to finish):",
+                    "x"
+                )
+                description = description_lines[0] if description_lines else ""
+                
+                self.console.print("\nSelect protocol:")
+                self.console.print("1. HTTP")
+                self.console.print("2. gRPC")
+                self.console.print("3. WebSocket")
+                self.console.print("4. Query")
+                self.console.print("5. Other")
+                
+                protocol_choice = self.prompt.ask(
+                    "Select protocol",
+                    choices=["1", "2", "3", "4", "5"]
+                )
+                
+                # Map choice to protocol
+                protocol_map = {
+                    "1": "HTTP",
+                    "2": "gRPC",
+                    "3": "WebSocket",
+                    "4": "Query",
+                    "5": "Other"
+                }
+                protocol = protocol_map[protocol_choice]
+                
+                described_relationships.append({
+                    "relationship": f"{source} -> {target}",
+                    "description": description,
+                    "protocol": protocol
+                })
         
         # Get database schema for each Database and Cache component
         schema = []

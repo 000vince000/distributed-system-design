@@ -203,31 +203,32 @@ class SystemDesignPractice:
             self.console.print(Panel.fit("System Design Practice Tool", style="bold blue"))
             
             # If starting from a specific step, load stub data
-            if start_step > 1 and not hasattr(self, 'current_design') or not self.current_design.get("question"):
-                stub_functions = {
-                    2: get_step1_stub,
-                    3: get_step2_stub,
-                    4: get_step3_stub,
-                    5: get_step4_stub,
-                    6: get_step5_stub
-                }
-                if start_step in stub_functions:
-                    self.current_design = stub_functions[start_step]()
-                    self.console.print(f"\n[bold]Starting from Step {start_step} with stub data[/bold]")
-                    
-                    # Display summaries of all previous steps
+            if start_step > 1:
+                if not hasattr(self, 'current_design') or not self.current_design.get("question"):
+                    stub_functions = {
+                        2: get_step1_stub,
+                        3: get_step2_stub,
+                        4: get_step3_stub,
+                        5: get_step4_stub,
+                        6: get_step5_stub
+                    }
+                    if start_step in stub_functions:
+                        self.current_design = stub_functions[start_step]()
+                        self.console.print(f"\n[bold]Starting from Step {start_step} with stub data[/bold]")
+                        
+                        # Display summaries of all previous steps
+                        self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
+                        for step in range(1, start_step):
+                            self._display_stub_summary(step)
+                    else:
+                        self.console.print("[red]Invalid start step number[/red]")
+                        return
+                else:
+                    # When loading from partial file, show summaries of previous steps
+                    self.console.print(f"\n[bold]Resuming from Step {start_step}[/bold]")
                     self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
                     for step in range(1, start_step):
                         self._display_stub_summary(step)
-                else:
-                    self.console.print("[red]Invalid start step number[/red]")
-                    return
-            elif start_step > 1:
-                # When loading from partial file, show summaries of previous steps
-                self.console.print(f"\n[bold]Resuming from Step {start_step}[/bold]")
-                self.console.print("\n[bold yellow]Previous Steps Summary:[/bold yellow]")
-                for step in range(1, start_step):
-                    self._display_stub_summary(step)
             
             self.select_design_question(start_step)
         except Exception as e:
