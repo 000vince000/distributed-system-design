@@ -2,15 +2,9 @@ from .base_step import BaseStep
 from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
 
 class ApiStep(BaseStep):
-    def __init__(self, console=None):
-        super().__init__(console)
-        self.input_helper = InputHelper(self.console, self.prompt)
-        self.display_helper = DisplayHelper(self.console)
-        self.nav_helper = StepNavigationHelper(self.console, self.prompt)
-
     def execute(self, design_data):
         """Design internal and external APIs."""
-        self.nav_helper.display_step_header(2)
+        self.navigation_helper.display_step_header(2)
         
         # Create a copy of functional requirements to track which ones have been addressed
         remaining_reqs = design_data["requirements"]["functional"].copy()
@@ -25,21 +19,21 @@ class ApiStep(BaseStep):
             
             self.console.print("x. Done with all requirements")
             
-            choices = [str(i) for i in range(1, len(remaining_reqs) + 1)] + ["x"]
+            choices = [str(i) for i in range(1, len(remaining_reqs) + 1)] + [self.input_helper.SKIP_CHOICE]
             choice = self.input_helper.get_choice(
                 "Select a requirement to design APIs for",
                 choices=choices
             )
             
-            if choice == "x":
+            if choice == self.input_helper.SKIP_CHOICE:
                 break
             
             selected_req = remaining_reqs[int(choice) - 1]
             
             # Get API type
             self.console.print(f"\n[bold]Designing APIs for: {selected_req}[/bold]")
-            self.console.print("1. External API")
-            self.console.print("2. Internal API")
+            api_options = ["External API", "Internal API"]
+            self.display_helper.display_list(api_options, enumerate_items=True)
             
             api_type = self.input_helper.get_choice(
                 "Select API type",
@@ -48,20 +42,17 @@ class ApiStep(BaseStep):
             
             api_type_name = "external" if api_type == "1" else "internal"
             api = self.input_helper.get_multi_line_input(
-                f"Enter {api_type_name} API endpoint for '{selected_req}'",
-                "x"
+                f"Enter {api_type_name} API endpoint for '{selected_req}'"
             )[0]
             
             # Get request definition
             request_def = self.input_helper.get_multi_line_input(
-                "Enter request definition (one per line, x to finish):",
-                "x"
+                "Enter request definition (one per line, x to finish):"
             )
             
             # Get response definition
             response_def = self.input_helper.get_multi_line_input(
-                "Enter response definition (one per line, x to finish):",
-                "x"
+                "Enter response definition (one per line, x to finish):"
             )
             
             # Store the complete API definition

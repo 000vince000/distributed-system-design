@@ -1,22 +1,15 @@
 from rich.console import Console
 from rich.prompt import Prompt
+from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
 
 class BaseStep:
     def __init__(self, console=None):
         self.console = console or Console()
         self.prompt = Prompt()
-    
-    def _get_multi_line_input(self, prompt: str, terminator: str = "x") -> list:
-        """Get multi-line input from user until terminator is entered."""
-        self.console.print(f"\n{prompt}")
-        lines = []
-        while True:
-            line = input()
-            if line.strip() == terminator:
-                break
-            if line.strip():  # Only add non-empty lines
-                lines.append(line.strip())
-        return lines
+        # Initialize helpers
+        self.input_helper = InputHelper(self.console, self.prompt)
+        self.display_helper = DisplayHelper(self.console)
+        self.navigation_helper = StepNavigationHelper(self.console, self.prompt)
     
     def execute(self, design_data):
         """Execute the step and return updated design data."""

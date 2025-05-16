@@ -5,9 +5,15 @@ class InputHelper:
     def __init__(self, console: Console, prompt: Prompt):
         self.console = console
         self.prompt = prompt
+        self.SKIP_CHOICE = "x"  # Standard skip/finish choice
     
     def get_multi_line_input(self, prompt: str, terminator: str = "x") -> list:
-        """Get multi-line input from user until terminator is entered."""
+        """Get multi-line input from user until terminator is entered.
+        
+        Args:
+            prompt: The prompt to display
+            terminator: The terminator string (defaults to "x")
+        """
         self.console.print(f"\n{prompt}")
         lines = []
         while True:
@@ -18,10 +24,21 @@ class InputHelper:
                 lines.append(line.strip())
         return lines
     
-    def get_choice(self, prompt: str, choices: list, default: str = None) -> str:
-        """Get a choice from a list of options."""
+    def get_choice(self, prompt: str, choices: list, default: str = None, skip_prompt: bool = False) -> str:
+        """Get a choice from a list of options.
+        
+        Args:
+            prompt: The prompt to display
+            choices: List of valid choices
+            default: Default choice if only one option
+            skip_prompt: Whether to add skip option to prompt
+        """
+        # Add skip choice if not present and skip_prompt is True
+        if skip_prompt and self.SKIP_CHOICE not in choices:
+            choices = choices + [self.SKIP_CHOICE]
+            
         prompt_kwargs = {
-            "prompt": prompt,
+            "prompt": prompt + (" (or 'x' to skip)" if skip_prompt else ""),
             "choices": choices
         }
         if default and len(choices) == 1:
