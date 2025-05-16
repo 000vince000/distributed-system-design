@@ -1,9 +1,16 @@
 from .base_step import BaseStep
+from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
 
 class ApiStep(BaseStep):
+    def __init__(self, console=None):
+        super().__init__(console)
+        self.input_helper = InputHelper(self.console, self.prompt)
+        self.display_helper = DisplayHelper(self.console)
+        self.nav_helper = StepNavigationHelper(self.console, self.prompt)
+
     def execute(self, design_data):
         """Design internal and external APIs."""
-        self.console.print("\n[bold]Step 2: API Design[/bold]")
+        self.nav_helper.display_step_header(2)
         
         # Create a copy of functional requirements to track which ones have been addressed
         remaining_reqs = design_data["requirements"]["functional"].copy()
@@ -14,19 +21,15 @@ class ApiStep(BaseStep):
 
         while remaining_reqs:
             self.console.print("\n[bold]Select a functional requirement to design APIs for:[/bold]")
-            for i, req in enumerate(remaining_reqs, 1):
-                self.console.print(f"{i}. {req}")
+            self.display_helper.display_list(remaining_reqs, enumerate_items=True)
             
             self.console.print("x. Done with all requirements")
             
             choices = [str(i) for i in range(1, len(remaining_reqs) + 1)] + ["x"]
-            prompt_kwargs = {
-                "prompt": "Select a requirement to design APIs for",
-                "choices": choices
-            }
-            if len(choices) == 2:  # Only one requirement + 'x'
-                prompt_kwargs["default"] = choices[0]
-            choice = self.prompt.ask(**prompt_kwargs)
+            choice = self.input_helper.get_choice(
+                "Select a requirement to design APIs for",
+                choices=choices
+            )
             
             if choice == "x":
                 break
@@ -38,25 +41,25 @@ class ApiStep(BaseStep):
             self.console.print("1. External API")
             self.console.print("2. Internal API")
             
-            api_type = self.prompt.ask(
+            api_type = self.input_helper.get_choice(
                 "Select API type",
                 choices=["1", "2"]
             )
             
             api_type_name = "external" if api_type == "1" else "internal"
-            api = self._get_multi_line_input(
+            api = self.input_helper.get_multi_line_input(
                 f"Enter {api_type_name} API endpoint for '{selected_req}'",
                 "x"
             )[0]
             
             # Get request definition
-            request_def = self._get_multi_line_input(
+            request_def = self.input_helper.get_multi_line_input(
                 "Enter request definition (one per line, x to finish):",
                 "x"
             )
             
             # Get response definition
-            response_def = self._get_multi_line_input(
+            response_def = self.input_helper.get_multi_line_input(
                 "Enter response definition (one per line, x to finish):",
                 "x"
             )
@@ -80,7 +83,6 @@ class ApiStep(BaseStep):
             
             if remaining_reqs:
                 self.console.print("\n[bold]Remaining requirements:[/bold]")
-                for req in remaining_reqs:
-                    self.console.print(f"- {req}")
+                self.display_helper.display_list(remaining_reqs)
         
         return design_data 

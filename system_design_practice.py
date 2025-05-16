@@ -196,51 +196,69 @@ class SystemDesignPractice:
                 for case in self.current_design["edge_cases"]["big"]:
                     self.console.print(f"- {case}")
 
-    def start(self, start_step: int = 1):
-        """Start the system design practice session."""
+    def _load_design_file(self, filename: str, is_stub: bool = False) -> int:
+        """Load design data from a file and return the next step number.
+        
+        Args:
+            filename: Path to the file to load
+            is_stub: Whether this is a stub file (True) or partial file (False)
+            
+        Returns:
+            int: The step number to start from
+        """
+        try:
+            if is_stub:
+                # For stubs, the step number comes from the command line
+                # and we load the corresponding stub data
+                step = int(filename)  # filename is actually the step number for stubs
+                if step == 2:
+                    self.current_design = get_step1_stub()
+                elif step == 3:
+                    self.current_design = get_step2_stub()
+                elif step == 4:
+                    self.current_design = get_step3_stub()
+                elif step == 5:
+                    self.current_design = get_step4_stub()
+                elif step == 6:
+                    self.current_design = get_step5_stub()
+                return step
+            else:
+                # For partial files, load the data and get next step from file
+                with open(filename, 'r') as f:
+                    data = json.load(f)
+                    self.current_design = data['design']
+                    self.start_time = data['start_time']
+                    return data['step'] + 1  # Return the next step
+        except Exception as e:
+            self.console.print(f"[red]Error loading design file: {str(e)}[/red]")
+            return 1
+
+    def start(self, filename: str, is_stub: bool = False):
+        """Start or resume the system design practice session.
+        
+        Args:
+            filename: For stubs, this is the step number. For partial files, this is the file path.
+            is_stub: Whether we're loading a stub file (True) or partial file (False)
+        """
         self.console.print(Panel.fit("System Design Practice Tool"))
         
-        # If starting from a specific step, load stub data for previous steps
-        if start_step > 1:
-            if not self.current_design["question"]:
-                # Load stub data for previous steps
-                if start_step == 2:
-                    self.current_design = get_step1_stub()
-                elif start_step == 3:
-                    self.current_design = get_step2_stub()
-                elif start_step == 4:
-                    self.current_design = get_step3_stub()
-                elif start_step == 5:
-                    self.current_design = get_step4_stub()
-                elif start_step == 6:
-                    self.current_design = get_step5_stub()
+        # Load the design file and get the starting step
+        start_step = self._load_design_file(filename, is_stub)
         
         # Select design question if not already set
         if not self.current_design["question"]:
             self.select_design_question(start_step)
         
         # Display summary of previous steps
-        self.console.print(f"\nResuming from Step {start_step}\n")
+        self.console.print(f"\n{'Starting' if is_stub else 'Resuming'} from Step {start_step}\n")
         self.console.print("Previous Steps Summary:\n")
         
+        # Display summaries of completed steps
         for step in range(1, start_step):
             self._display_stub_summary(step)
         
-        # Execute steps
+        # Execute remaining steps
         for i, step in enumerate(self.steps[start_step - 1:], start_step):
-            # Check if step is already completed
-            if i == 4 and "architecture" in self.current_design and self.current_design["architecture"]:
-                self.console.print("\n[bold blue]Step 4: Architecture Summary[/bold blue]")
-                self._display_stub_summary(4)
-                self.console.print("[green]Step 4 (Architecture) is already completed. Moving to step 5.[/green]")
-                continue
-            elif i == 5 and "optimizations" in self.current_design and self.current_design["optimizations"]:
-                self.console.print("[green]Step 5 (Optimizations) is already completed. Moving to step 6.[/green]")
-                continue
-            elif i == 6 and "edge_cases" in self.current_design and self.current_design["edge_cases"]:
-                self.console.print("[green]Step 6 (Edge Cases) is already completed.[/green]")
-                continue
-            
             self.current_design = step.execute(self.current_design)
             self._save_partial_design(i)
             
@@ -291,18 +309,6 @@ class SystemDesignPractice:
         
         self.console.print(f"\n[yellow]Partial design saved to: {filename}[/yellow]")
 
-    def _load_partial_design(self, filename: str):
-        """Load a partial design from file."""
-        try:
-            with open(filename, 'r') as f:
-                data = json.load(f)
-                self.current_design = data['design']
-                self.start_time = data['start_time']
-                return data['step']
-        except Exception as e:
-            self.console.print(f"[red]Error loading partial design: {str(e)}[/red]")
-            return 1
-
     def _cleanup_partial_files(self, question_name: str):
         """Clean up partial files for the current design."""
         try:
@@ -328,6 +334,9 @@ class SystemDesignPractice:
             self.current_design["question"] = self._get_question_details(choice)
             self.console.print("\n[bold]Selected Question:[/bold]")
             self.console.print(self.current_design["question"])
+            
+            # Initialize start time when starting a new design
+            self.start_time = time.time()
         
         # Execute steps starting from the specified step
         for i, step in enumerate(self.steps[start_step-1:], start=start_step):
@@ -558,11 +567,9 @@ def main():
     practice = SystemDesignPractice()
     
     if args.load_partial:
-        # Load partial design and start from the next step
-        next_step = practice._load_partial_design(args.load_partial)
-        practice.start(next_step)
+        practice.start(args.load_partial, is_stub=False)
     else:
-        practice.start(args.start_step)
+        practice.start(str(args.start_step), is_stub=True)
 
 if __name__ == "__main__":
     main() 
