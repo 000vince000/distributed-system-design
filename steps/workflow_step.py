@@ -1,9 +1,16 @@
 from .base_step import BaseStep
+from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
 
 class WorkflowStep(BaseStep):
+    def __init__(self, console=None):
+        super().__init__(console)
+        self.input_helper = InputHelper(self.console, self.prompt)
+        self.display_helper = DisplayHelper(self.console)
+        self.nav_helper = StepNavigationHelper(self.console, self.prompt)
+
     def execute(self, design_data):
         """Design workflows for each API."""
-        self.console.print("\n[bold]Step 3: Workflow Design[/bold]")
+        self.nav_helper.display_step_header(3)
         
         # Create a list of all APIs with their requirements
         api_choices = []
@@ -69,14 +76,10 @@ class WorkflowStep(BaseStep):
             if design_data["workflows"]:
                 choices.append("x")
             
-            prompt_kwargs = {
-                "prompt": "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
-                "choices": choices
-            }
-            if len(choices) == 1:
-                prompt_kwargs["default"] = choices[0]
-            
-            choice = self.prompt.ask(**prompt_kwargs)
+            choice = self.input_helper.get_choice(
+                "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
+                choices=choices
+            )
             
             if choice == "x":
                 break
@@ -88,7 +91,7 @@ class WorkflowStep(BaseStep):
             self.console.print(f"Requirement: {req}")
             
             # Get high-level workflow steps
-            workflow_steps = self._get_multi_line_input(
+            workflow_steps = self.input_helper.get_multi_line_input(
                 "Enter high-level workflow steps (one per line, x to finish):",
                 "x"
             )
@@ -97,7 +100,7 @@ class WorkflowStep(BaseStep):
             step_definitions = []
             for i, step in enumerate(workflow_steps, 1):
                 self.console.print(f"\n[bold]Step {i}: {step}[/bold]")
-                substeps = self._get_multi_line_input(
+                substeps = self.input_helper.get_multi_line_input(
                     "Enter substeps (one per line, x to finish):",
                     "x"
                 )
