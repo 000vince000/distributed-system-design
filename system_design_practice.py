@@ -423,8 +423,21 @@ class SystemDesignPractice:
             mermaid_diagram = self.generate_mermaid_diagram()
 
             # Format API sections
-            internal_apis = "\n".join(f"- {api['endpoint']}" for api in self.current_design['apis']['internal'])
-            external_apis = "\n".join(f"- {api['endpoint']}" for api in self.current_design['apis']['external'])
+            internal_apis = []
+            for api in self.current_design['apis']['internal']:
+                internal_apis.append(f"- {api['endpoint']}")
+                if api['request']:
+                    internal_apis.append(f"  - Request: {', '.join(api['request'])}")
+                if api['response']:
+                    internal_apis.append(f"  - Response: {', '.join(api['response'])}")
+            
+            external_apis = []
+            for api in self.current_design['apis']['external']:
+                external_apis.append(f"- {api['endpoint']}")
+                if api['request']:
+                    external_apis.append(f"  - Request: {', '.join(api['request'])}")
+                if api['response']:
+                    external_apis.append(f"  - Response: {', '.join(api['response'])}")
             
             # Format workflow section
             workflows = []
@@ -443,6 +456,13 @@ class SystemDesignPractice:
                 for comp, type_ in self.current_design["architecture"]["component_types"].items():
                     components.append(f"- {comp}: {type_}")
             components_str = "\n".join(components)
+
+            # Format database schema section
+            database_schema = []
+            if "architecture" in self.current_design and "database_schema" in self.current_design["architecture"]:
+                for schema in self.current_design["architecture"]["database_schema"]:
+                    database_schema.append(f"- {schema}")
+            database_schema_str = "\n".join(database_schema)
 
             # Format optimizations section
             optimizations = []
@@ -491,10 +511,10 @@ class SystemDesignPractice:
 
 ## APIs
 ### Internal
-{internal_apis}
+{chr(10).join(internal_apis)}
 
 ### External
-{external_apis}
+{chr(10).join(external_apis)}
 
 ## Workflows
 {workflows_str}
@@ -506,6 +526,9 @@ class SystemDesignPractice:
 ```mermaid
 {mermaid_diagram}
 ```
+
+## Database Schema
+{database_schema_str}
 
 ## Optimizations
 {optimizations_str}
