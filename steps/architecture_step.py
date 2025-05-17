@@ -77,8 +77,8 @@ class ArchitectureStep(BaseStep):
         for workflow in design_data.get("workflows", []):
             steps = workflow["steps"]
             for i in range(len(steps) - 1):
-                source = steps[i]["step"].strip()  # Remove .lower() to preserve case
-                target = steps[i + 1]["step"].strip()  # Remove .lower() to preserve case
+                source = steps[i]["step"].strip()
+                target = steps[i + 1]["step"].strip()
                 # Only add if not already in the list
                 rel = f"{source} -> {target}"
                 if not any(r["relationship"] == rel for r in inferred_relationships):
@@ -93,7 +93,7 @@ class ArchitectureStep(BaseStep):
 
     def execute(self, design_data):
         """Design system architecture and database schema."""
-        self.console.print("\n[bold]Step 4: Architecture Diagramming[/bold]")
+        self.navigation_helper.display_step_header(4)
         
         # Check if architecture is already defined
         if "architecture" in design_data and design_data["architecture"]:
@@ -104,7 +104,7 @@ class ArchitectureStep(BaseStep):
         components = set()
         for workflow in design_data.get("workflows", []):
             for step in workflow["steps"]:
-                components.add(step["step"].strip())  # Remove .lower() to preserve case
+                components.add(step["step"].strip())
         
         if not components:
             self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
@@ -113,31 +113,24 @@ class ArchitectureStep(BaseStep):
         # Get component types
         self.console.print("\n[bold]Specify component types:[/bold]")
         component_types = {}
+        type_options = [
+            "Client",
+            "API",
+            "Service",
+            "Database",
+            "Cache",
+            "Other"
+        ]
+        
         for comp in sorted(components):
             self.console.print(f"\nSelect type for {comp}:")
-            self.console.print("0. Client")
-            self.console.print("1. API")
-            self.console.print("2. Service")
-            self.console.print("3. Database")
-            self.console.print("4. Cache")
-            self.console.print("5. Other")
+            self.display_helper.display_list(type_options, enumerate_items=True)
             
-            type_choice = self.prompt.ask(
+            type_choice = self.input_helper.get_choice(
                 "Select type",
-                choices=["0", "1", "2", "3", "4", "5"],
-                show_choices=True
+                choices=[str(i) for i in range(1, len(type_options) + 1)]
             )
-            
-            # Map choice to type
-            type_map = {
-                "0": "Client",
-                "1": "API",
-                "2": "Service",
-                "3": "Database",
-                "4": "Cache",
-                "5": "Other"
-            }
-            component_types[comp] = type_map[type_choice]
+            component_types[comp] = type_options[int(type_choice) - 1]
         
         # Infer relationships from workflows
         described_relationships = self._infer_relationships_from_workflows(design_data)
@@ -160,80 +153,29 @@ class ArchitectureStep(BaseStep):
             for i, comp in enumerate(components_list, 1):
                 self.console.print(f"{i}. {comp} ({component_types[comp]})")
             
-            self.console.print("\nOptions:")
-            self.console.print("a. Add new relationship")
-            self.console.print("d. Delete relationship")
-            self.console.print("e. Edit relationship")
-            self.console.print("x. Done defining relationships")
+            self.console.print("\n[bold]Relationship Options:[/bold]")
+            options = [
+                "Add new relationship",
+                "Delete relationship",
+                "Edit relationship",
+                "Done defining relationships"
+            ]
+            self.display_helper.display_list(options, enumerate_items=True)
             
-            choice = self.prompt.ask(
+            choice = self.input_helper.get_choice(
                 "Select option",
-                choices=["a", "d", "e", "x"]
+                choices=["1", "2", "3", self.input_helper.SKIP_CHOICE]
             )
             
-            if choice == "x":
+            if choice == self.input_helper.SKIP_CHOICE:
                 break
-            elif choice == "d":
-                if not described_relationships:
-                    self.console.print("[yellow]No relationships to delete.[/yellow]")
-                    continue
-                    
-                rel_idx = self.prompt.ask(
-                    "Enter relationship number to delete",
-                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
-                )
-                del described_relationships[int(rel_idx) - 1]
-                self.console.print("[green]Relationship deleted.[/green]")
-                
-            elif choice == "e":
-                if not described_relationships:
-                    self.console.print("[yellow]No relationships to edit.[/yellow]")
-                    continue
-                    
-                rel_idx = self.prompt.ask(
-                    "Enter relationship number to edit",
-                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
-                )
-                rel = described_relationships[int(rel_idx) - 1]
-                
-                # Edit description
-                self.console.print(f"\n[bold]Current description: {rel['description']}[/bold]")
-                description_lines = self._get_multi_line_input(
-                    "Enter new description (x to keep current):",
-                    "x"
-                )
-                if description_lines:
-                    rel["description"] = description_lines[0]
-                
-                # Edit protocol
-                self.console.print(f"\n[bold]Current protocol: {rel['protocol']}[/bold]")
-                self.console.print("\nSelect new protocol:")
-                self.console.print("1. HTTP")
-                self.console.print("2. gRPC")
-                self.console.print("3. WebSocket")
-                self.console.print("4. Query")
-                self.console.print("5. Other")
-                
-                protocol_choice = self.prompt.ask(
-                    "Select protocol (x to keep current)",
-                    choices=["1", "2", "3", "4", "5", "x"]
-                )
-                
-                if protocol_choice != "x":
-                    protocol_map = {
-                        "1": "HTTP",
-                        "2": "gRPC",
-                        "3": "WebSocket",
-                        "4": "Query",
-                        "5": "Other"
-                    }
-                    rel["protocol"] = protocol_map[protocol_choice]
-                
-            elif choice == "a":
+            elif choice == "1":  # Add
                 # Get relationship in format "source->target"
                 self.console.print("\nEnter relationship in format 'source->target' (e.g., '1->3')")
-                relationship = self.prompt.ask(
-                    "Select relationship"
+                relationship = self.input_helper.get_choice(
+                    "Select relationship",
+                    choices=[f"{i}->{j}" for i in range(1, len(components_list) + 1) 
+                            for j in range(1, len(components_list) + 1) if i != j]
                 )
                 
                 try:
@@ -253,39 +195,80 @@ class ArchitectureStep(BaseStep):
                 
                 # Get relationship details
                 self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
-                description_lines = self._get_multi_line_input(
-                    "Enter relationship description (x to finish):",
-                    "x"
+                description_lines = self.input_helper.get_multi_line_input(
+                    "Enter relationship description (x to finish):"
                 )
                 description = description_lines[0] if description_lines else ""
                 
-                self.console.print("\nSelect protocol:")
-                self.console.print("1. HTTP")
-                self.console.print("2. gRPC")
-                self.console.print("3. WebSocket")
-                self.console.print("4. Query")
-                self.console.print("5. Other")
+                protocol_options = [
+                    "HTTP",
+                    "gRPC",
+                    "WebSocket",
+                    "Query",
+                    "Other"
+                ]
+                self.display_helper.display_list(protocol_options, enumerate_items=True)
                 
-                protocol_choice = self.prompt.ask(
+                protocol_choice = self.input_helper.get_choice(
                     "Select protocol",
-                    choices=["1", "2", "3", "4", "5"]
+                    choices=[str(i) for i in range(1, len(protocol_options) + 1)]
                 )
-                
-                # Map choice to protocol
-                protocol_map = {
-                    "1": "HTTP",
-                    "2": "gRPC",
-                    "3": "WebSocket",
-                    "4": "Query",
-                    "5": "Other"
-                }
-                protocol = protocol_map[protocol_choice]
                 
                 described_relationships.append({
                     "relationship": f"{source} -> {target}",
                     "description": description,
-                    "protocol": protocol
+                    "protocol": protocol_options[int(protocol_choice) - 1]
                 })
+            elif choice == "2":  # Delete
+                if not described_relationships:
+                    self.console.print("[yellow]No relationships to delete.[/yellow]")
+                    continue
+                    
+                rel_idx = self.input_helper.get_choice(
+                    "Enter relationship number to delete",
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                )
+                del described_relationships[int(rel_idx) - 1]
+                self.console.print("[green]Relationship deleted.[/green]")
+                
+            elif choice == "3":  # Edit
+                if not described_relationships:
+                    self.console.print("[yellow]No relationships to edit.[/yellow]")
+                    continue
+                    
+                rel_idx = self.input_helper.get_choice(
+                    "Enter relationship number to edit",
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                )
+                rel = described_relationships[int(rel_idx) - 1]
+                
+                # Edit description
+                self.console.print(f"\n[bold]Current description: {rel['description']}[/bold]")
+                description_lines = self.input_helper.get_multi_line_input(
+                    "Enter new description (x to keep current):"
+                )
+                if description_lines:
+                    rel["description"] = description_lines[0]
+                
+                # Edit protocol
+                self.console.print(f"\n[bold]Current protocol: {rel['protocol']}[/bold]")
+                protocol_options = [
+                    "HTTP",
+                    "gRPC",
+                    "WebSocket",
+                    "Query",
+                    "Other"
+                ]
+                self.display_helper.display_list(protocol_options, enumerate_items=True)
+                
+                protocol_choice = self.input_helper.get_choice(
+                    "Select protocol (x to keep current)",
+                    choices=[str(i) for i in range(1, len(protocol_options) + 1)] + [self.input_helper.SKIP_CHOICE],
+                    skip_prompt=True
+                )
+                
+                if protocol_choice != self.input_helper.SKIP_CHOICE:
+                    rel["protocol"] = protocol_options[int(protocol_choice) - 1]
         
         # Get database schema for each Database and Cache component
         schema = []
@@ -300,9 +283,8 @@ class ArchitectureStep(BaseStep):
                 self.console.print("Example: Users: id:int, username:string, email:string")
                 self.console.print("Enter 'x' when done with this component")
                 
-                component_schema = self._get_multi_line_input(
-                    f"Enter schema for {comp} (x to finish):",
-                    "x"
+                component_schema = self.input_helper.get_multi_line_input(
+                    f"Enter schema for {comp} (x to finish):"
                 )
                 if component_schema:
                     schema.extend([f"{comp}: {table}" for table in component_schema])

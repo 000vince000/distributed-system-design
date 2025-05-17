@@ -74,14 +74,14 @@ class WorkflowStep(BaseStep):
             # Only show 'x' option if at least one workflow is defined
             choices = [str(i) for i in range(1, len(available_apis) + 1)]
             if design_data["workflows"]:
-                choices.append("x")
+                choices.append(self.input_helper.SKIP_CHOICE)
             
             choice = self.input_helper.get_choice(
                 "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
                 choices=choices
             )
             
-            if choice == "x":
+            if choice == self.input_helper.SKIP_CHOICE:
                 break
                 
             selected_api = available_apis[int(choice) - 1]
@@ -92,8 +92,7 @@ class WorkflowStep(BaseStep):
             
             # Get high-level workflow steps
             workflow_steps = self.input_helper.get_multi_line_input(
-                "Enter high-level workflow steps (one per line, x to finish):",
-                "x"
+                "Enter high-level workflow steps (one per line, x to finish):"
             )
             
             # For each step, get detailed definition with substeps
@@ -101,8 +100,7 @@ class WorkflowStep(BaseStep):
             for i, step in enumerate(workflow_steps, 1):
                 self.console.print(f"\n[bold]Step {i}: {step}[/bold]")
                 substeps = self.input_helper.get_multi_line_input(
-                    "Enter substeps (one per line, x to finish):",
-                    "x"
+                    "Enter substeps (one per line, x to finish):"
                 )
                 step_definitions.append({
                     "step": step,
