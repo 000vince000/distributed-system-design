@@ -1,95 +1,14 @@
 from .base_step import BaseStep
+from .diagram_generator import DiagramGenerator
+from .relationship_manager import RelationshipManager
+from .schema_manager import SchemaManager
 
 class ArchitectureStep(BaseStep):
-    def _generate_mermaid_diagram(self, design_data):
-        """Generate a Mermaid diagram from the architecture design."""
-        diagram = ["graph TD"]
-        
-        # Add components with their types
-        comp_name_map = {}
-        for comp, type_ in design_data["architecture"]["component_types"].items():
-            comp_id = comp.replace(" ", "")
-            comp_name_map[comp] = comp_id
-            if type_ == "API":
-                diagram.append(f"    {comp_id}[{comp}]")
-            elif type_ == "Service":
-                diagram.append(f"    {comp_id}(({comp}))")
-            elif type_ == "Database":
-                diagram.append(f"    {comp_id}[(Database)]")
-            elif type_ == "Cache":
-                diagram.append(f"    {comp_id}[(Cache)]")
-            else:  # Other type
-                diagram.append(f"    {comp_id}[{comp}]")
-        
-        # Add relationships
-        for rel in design_data["architecture"]["relationships"]:
-            source, target = rel["relationship"].split("->")
-            source = source.strip()
-            target = target.strip()
-            protocol = rel["protocol"]
-            description = rel["description"]
-            
-            # Quote the description text
-            label = f'"{protocol}: {description}"'
-            
-            source_id = comp_name_map.get(source, source.replace(" ", ""))
-            target_id = comp_name_map.get(target, target.replace(" ", ""))
-            
-            if protocol == "HTTP":
-                diagram.append(f"    {source_id} -->|{label}| {target_id}")
-            elif protocol == "gRPC":
-                diagram.append(f"    {source_id} -.->|{label}| {target_id}")
-            elif protocol == "WebSocket":
-                diagram.append(f"    {source_id} ===|{label}| {target_id}")
-            else:  # Other protocol
-                diagram.append(f"    {source_id} -->|{label}| {target_id}")
-        
-        # Add database and cache schema as subgraphs
-        if "database_schema" in design_data["architecture"]:
-            from collections import defaultdict
-            storage_tables = defaultdict(list)
-            for entry in design_data["architecture"]["database_schema"]:
-                if ":" in entry:
-                    storage, table = entry.split(":", 1)
-                    storage = storage.strip()
-                    table = table.strip()
-                    storage_id = comp_name_map.get(storage, storage.replace(" ", ""))
-                    storage_tables[storage_id].append((storage, table))
-            for storage_id, table_entries in storage_tables.items():
-                storage = table_entries[0][0]
-                subgraph_name = f"Schema for {storage}"
-                diagram.append(f"    subgraph \"{subgraph_name}\"")
-                table_nodes = []
-                for idx, (storage_name, table) in enumerate(table_entries):
-                    node_name = f"{storage_id}_table{idx}"
-                    diagram.append(f"        {node_name}[\"{table}\"]")
-                    table_nodes.append(node_name)
-                diagram.append(f"    end")
-                # Connect storage node (db or cache) to each table node with a solid line
-                for node_name in table_nodes:
-                    diagram.append(f"    {storage_id} --- {node_name}")
-        
-        return "\n".join(diagram)
-
-    def _infer_relationships_from_workflows(self, design_data):
-        """Infer relationships from workflow steps."""
-        inferred_relationships = []
-        for workflow in design_data.get("workflows", []):
-            steps = workflow["steps"]
-            for i in range(len(steps) - 1):
-                source = steps[i]["step"].strip()
-                target = steps[i + 1]["step"].strip()
-                # Only add if not already in the list
-                rel = f"{source} -> {target}"
-                if not any(r["relationship"] == rel for r in inferred_relationships):
-                    # Only set description if source is a Client component
-                    description = workflow["api"] if i == 0 else ""
-                    inferred_relationships.append({
-                        "relationship": rel,
-                        "description": description,
-                        "protocol": "HTTP"  # Default protocol
-                    })
-        return inferred_relationships
+    def __init__(self, console=None):
+        super().__init__(console)
+        self.diagram_generator = DiagramGenerator()
+        self.relationship_manager = RelationshipManager()
+        self.schema_manager = SchemaManager()
 
     def execute(self, design_data):
         """Design system architecture and database schema."""
@@ -133,7 +52,7 @@ class ArchitectureStep(BaseStep):
             component_types[comp] = type_options[int(type_choice) - 1]
         
         # Infer relationships from workflows
-        described_relationships = self._infer_relationships_from_workflows(design_data)
+        described_relationships = self.relationship_manager.infer_relationships_from_workflows(design_data)
         
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
@@ -200,13 +119,7 @@ class ArchitectureStep(BaseStep):
                 )
                 description = description_lines[0] if description_lines else ""
                 
-                protocol_options = [
-                    "HTTP",
-                    "gRPC",
-                    "WebSocket",
-                    "Query",
-                    "Other"
-                ]
+                protocol_options = self.relationship_manager.get_protocol_options()
                 self.display_helper.display_list(protocol_options, enumerate_items=True)
                 
                 protocol_choice = self.input_helper.get_choice(
@@ -214,11 +127,11 @@ class ArchitectureStep(BaseStep):
                     choices=[str(i) for i in range(1, len(protocol_options) + 1)]
                 )
                 
-                described_relationships.append({
-                    "relationship": f"{source} -> {target}",
-                    "description": description,
-                    "protocol": protocol_options[int(protocol_choice) - 1]
-                })
+                described_relationships.append(
+                    self.relationship_manager.format_relationship(
+                        source, target, description, protocol_options[int(protocol_choice) - 1]
+                    )
+                )
             elif choice == "2":  # Delete
                 if not described_relationships:
                     self.console.print("[yellow]No relationships to delete.[/yellow]")
@@ -252,13 +165,7 @@ class ArchitectureStep(BaseStep):
                 
                 # Edit protocol
                 self.console.print(f"\n[bold]Current protocol: {rel['protocol']}[/bold]")
-                protocol_options = [
-                    "HTTP",
-                    "gRPC",
-                    "WebSocket",
-                    "Query",
-                    "Other"
-                ]
+                protocol_options = self.relationship_manager.get_protocol_options()
                 self.display_helper.display_list(protocol_options, enumerate_items=True)
                 
                 protocol_choice = self.input_helper.get_choice(
@@ -272,8 +179,7 @@ class ArchitectureStep(BaseStep):
         
         # Get database schema for each Database and Cache component
         schema = []
-        storage_components = {comp: type_ for comp, type_ in component_types.items() 
-                            if type_ in ["Database", "Cache"]}
+        storage_components = self.schema_manager.get_storage_components(component_types)
         
         if storage_components:
             self.console.print("\n[bold]Enter database schema for each storage component:[/bold]")
@@ -287,7 +193,7 @@ class ArchitectureStep(BaseStep):
                     f"Enter schema for {comp} (x to finish):"
                 )
                 if component_schema:
-                    schema.extend([f"{comp}: {table}" for table in component_schema])
+                    schema.extend([self.schema_manager.format_schema_entry(comp, table) for table in component_schema])
         
         # Store architecture design
         design_data["architecture"] = {
@@ -297,7 +203,7 @@ class ArchitectureStep(BaseStep):
         }
         
         # Generate and display Mermaid diagram
-        mermaid_diagram = self._generate_mermaid_diagram(design_data)
+        mermaid_diagram = self.diagram_generator.generate_mermaid_diagram(design_data)
         self.console.print("\n[bold]Generated Architecture Diagram:[/bold]")
         self.console.print("```mermaid")
         self.console.print(mermaid_diagram)
