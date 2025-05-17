@@ -28,21 +28,17 @@ class EdgeCasesStep(BaseStep):
         while available_failures:
             # Show available failures
             self.console.print(f"\n[bold]Select {failure_type} failures to address:[/bold]")
-            for key, value in available_failures.items():
-                self.console.print(f"{key}. {value}")
+            self.display_helper.display_list(available_failures.values(), enumerate_items=True)
             self.console.print("x. Done")
             
             # Get user's selection
-            choices = list(available_failures.keys()) + ['x']
-            prompt_kwargs = {
-                "prompt": f"Select a failure (or 'x' to finish):",
-                "choices": choices
-            }
-            if len(choices) == 2:  # Only one failure + 'x'
-                prompt_kwargs["default"] = choices[0]
-            selected = self.prompt.ask(**prompt_kwargs)
+            choices = list(available_failures.keys()) + [self.input_helper.SKIP_CHOICE]
+            selected = self.input_helper.get_choice(
+                "Select a failure",
+                choices=choices
+            )
             
-            if selected == 'x':
+            if selected == self.input_helper.SKIP_CHOICE:
                 break
                 
             if selected in available_failures:
@@ -50,26 +46,27 @@ class EdgeCasesStep(BaseStep):
                 self.console.print(f"\n[bold]Failure:[/bold] {failure}")
                 prevention = []
                 mitigation = []
-                add_prevention = self.prompt.ask(
-                    "Add prevention strategies? (y/n)",
+                
+                add_prevention = self.input_helper.get_choice(
+                    "Add prevention strategies?",
                     choices=["y", "n"],
                     default="y"
                 )
                 if add_prevention == "y":
-                    prevention = self._get_multi_line_input(
-                        "Enter prevention strategies (one per line, x to finish):",
-                        "x"
+                    prevention = self.input_helper.get_multi_line_input(
+                        "Enter prevention strategies (one per line, x to finish):"
                     )
-                add_mitigation = self.prompt.ask(
-                    "Add mitigation strategies? (y/n)",
+                    
+                add_mitigation = self.input_helper.get_choice(
+                    "Add mitigation strategies?",
                     choices=["y", "n"],
                     default="y"
                 )
                 if add_mitigation == "y":
-                    mitigation = self._get_multi_line_input(
-                        "Enter mitigation strategies (one per line, x to finish):",
-                        "x"
+                    mitigation = self.input_helper.get_multi_line_input(
+                        "Enter mitigation strategies (one per line, x to finish):"
                     )
+                    
                 selected_failures.append({
                     "failure": failure,
                     "prevention": prevention,
@@ -82,6 +79,8 @@ class EdgeCasesStep(BaseStep):
 
     def execute(self, design_data):
         """Identify edge cases and failure scenarios."""
+        self.navigation_helper.display_step_header(6)
+        
         # Initialize edge cases structure if not exists
         if "edge_cases" not in design_data:
             design_data["edge_cases"] = {
@@ -91,36 +90,35 @@ class EdgeCasesStep(BaseStep):
             }
         
         # Get general edge cases
-        self.console.print("\n[bold]Step 6: Edge Cases[/bold]")
-        edge_cases = self._get_multi_line_input(
-            "Enter general edge cases (one per line, x to finish):",
-            "x"
+        edge_cases = self.input_helper.get_multi_line_input(
+            "Enter general edge cases (one per line, x to finish):"
         )
         edge_cases_with_strategies = []
         for edge_case in edge_cases:
             self.console.print(f"\n[bold]Edge Case:[/bold] {edge_case}")
             prevention = []
             mitigation = []
-            add_prevention = self.prompt.ask(
-                "Add prevention strategies? (y/n)",
+            
+            add_prevention = self.input_helper.get_choice(
+                "Add prevention strategies?",
                 choices=["y", "n"],
                 default="y"
             )
             if add_prevention == "y":
-                prevention = self._get_multi_line_input(
-                    "Enter prevention strategies (one per line, x to finish):",
-                    "x"
+                prevention = self.input_helper.get_multi_line_input(
+                    "Enter prevention strategies (one per line, x to finish):"
                 )
-            add_mitigation = self.prompt.ask(
-                "Add mitigation strategies? (y/n)",
+                
+            add_mitigation = self.input_helper.get_choice(
+                "Add mitigation strategies?",
                 choices=["y", "n"],
                 default="y"
             )
             if add_mitigation == "y":
-                mitigation = self._get_multi_line_input(
-                    "Enter mitigation strategies (one per line, x to finish):",
-                    "x"
+                mitigation = self.input_helper.get_multi_line_input(
+                    "Enter mitigation strategies (one per line, x to finish):"
                 )
+                
             edge_cases_with_strategies.append({
                 "edge_case": edge_case,
                 "prevention": prevention,
@@ -156,12 +154,10 @@ class EdgeCasesStep(BaseStep):
                     self.console.print(f"- [bold]{edge_case['edge_case']}[/bold]")
                     if edge_case["prevention"]:
                         self.console.print("    [green]Prevention:[/green]")
-                        for p in edge_case["prevention"]:
-                            self.console.print(f"      - {p}")
+                        self.display_helper.display_list(edge_case["prevention"], prefix="      -")
                     if edge_case["mitigation"]:
                         self.console.print("    [yellow]Mitigation:[/yellow]")
-                        for m in edge_case["mitigation"]:
-                            self.console.print(f"      - {m}")
+                        self.display_helper.display_list(edge_case["mitigation"], prefix="      -")
             
             if design_data["edge_cases"]["small_scale"]:
                 self.console.print("\n[bold]Small Scale Failures:[/bold]")
@@ -169,12 +165,10 @@ class EdgeCasesStep(BaseStep):
                     self.console.print(f"- [bold]{failure['failure']}[/bold]")
                     if failure.get("prevention"):
                         self.console.print("    [green]Prevention:[/green]")
-                        for p in failure["prevention"]:
-                            self.console.print(f"      - {p}")
+                        self.display_helper.display_list(failure["prevention"], prefix="      -")
                     if failure.get("mitigation"):
                         self.console.print("    [yellow]Mitigation:[/yellow]")
-                        for m in failure["mitigation"]:
-                            self.console.print(f"      - {m}")
+                        self.display_helper.display_list(failure["mitigation"], prefix="      -")
             
             if design_data["edge_cases"]["large_scale"]:
                 self.console.print("\n[bold]Large Scale Failures:[/bold]")
@@ -182,11 +176,9 @@ class EdgeCasesStep(BaseStep):
                     self.console.print(f"- [bold]{failure['failure']}[/bold]")
                     if failure.get("prevention"):
                         self.console.print("    [green]Prevention:[/green]")
-                        for p in failure["prevention"]:
-                            self.console.print(f"      - {p}")
+                        self.display_helper.display_list(failure["prevention"], prefix="      -")
                     if failure.get("mitigation"):
                         self.console.print("    [yellow]Mitigation:[/yellow]")
-                        for m in failure["mitigation"]:
-                            self.console.print(f"      - {m}")
+                        self.display_helper.display_list(failure["mitigation"], prefix="      -")
         
         return design_data 
