@@ -55,7 +55,7 @@ class OptimizationStep(BaseStep):
                 }
             }
         }
-        
+
         # Define NFR to category mapping
         self.nfr_to_cat = {
             # Scalability/Availability
@@ -88,37 +88,8 @@ class OptimizationStep(BaseStep):
             "realtime": "4"
         }
 
-    def execute(self, design_data):
-        """Add design optimizations."""
-        self.navigation_helper.display_step_header(5)
-        
-        # Initialize optimizations list
-        optimizations = []
-        
-        # Get non-functional requirements
-        nonfunctional_reqs = design_data["requirements"]["nonfunctional"]
-        if not nonfunctional_reqs:
-            self.console.print("[yellow]No non-functional requirements defined. Please define requirements first.[/yellow]")
-            return design_data
-            
-        # Display non-functional requirements for selection
-        self.console.print("\n[bold]Select NFR(s) to optimize for this component:[/bold]")
-        self.display_helper.display_list(nonfunctional_reqs, enumerate_items=True)
-        self.console.print("x. Done")
-        
-        nfr_choices = [str(i) for i in range(1, len(nonfunctional_reqs) + 1)] + [self.input_helper.SKIP_CHOICE]
-        nfr_selected = self.input_helper.get_choice(
-            "Select NFR",
-            choices=nfr_choices
-        )
-        
-        if nfr_selected == self.input_helper.SKIP_CHOICE:
-            return design_data
-        
-        nfr = nonfunctional_reqs[int(nfr_selected) - 1]
-        self.console.print(f"\n[bold]Optimizing for NFR: {nfr}[/bold]")
-        
-        # Try to map NFR to a category
+    def _get_category_for_nfr(self, nfr):
+        """Map NFR to optimization category."""
         nfr_lower = nfr.strip().lower()
         cat_key = self.nfr_to_cat.get(nfr_lower)
         
@@ -130,53 +101,117 @@ class OptimizationStep(BaseStep):
                     break
         
         self.console.print(f"[dim]Debug: NFR '{nfr}' -> cat_key '{cat_key}'[/dim]")
+        return cat_key
+
+    def _select_category_manually(self):
+        """Let user manually select optimization category."""
+        self.console.print("\n[bold]Select optimization category:[/bold]")
+        for key, value in self.optimization_options.items():
+            self.console.print(f"{key}. {value['name']}")
+        return self.input_helper.get_choice(
+            "Select category",
+            choices=list(self.optimization_options.keys())
+        )
+
+    def _process_subcategory(self, nfr, cat, subcat):
+        """Process a single subcategory optimization."""
+        self.console.print(f"[dim]You selected: {subcat}[/dim]")
+        # Get optimization details
+        details = self.input_helper.get_multi_line_input(
+            "Enter optimization details (one per line, x to finish):"
+        )
+        # Combine multiple lines into a single explanation
+        explanation = " ".join(details)
+        optimizations = [f"{nfr} / {subcat}: {explanation}"]
+        
+        # Prompt for trade-offs for this subcategory
+        tradeoffs = self.input_helper.get_multi_line_input(
+            "Enter trade-offs for this subcategory (one per line, x to finish):"
+        )
+        # Combine multiple lines into a single trade-offs consideration
+        tradeoff = " ".join(tradeoffs)
+        optimizations.append(f"{nfr} / {subcat} / Trade-offs: {tradeoff}")
+        return optimizations
+
+    def _process_free_text_optimization(self, nfr):
+        """Process free text optimization when no category is found."""
+        self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")
+        req_optimizations = self.input_helper.get_multi_line_input(
+            "Enter optimizations (one per line, x to finish):"
+        )
+        return [f"{nfr}: {opt}" for opt in req_optimizations]
+
+    def _process_nfr(self, nfr):
+        """Process a single NFR optimization."""
+        cat_key = self._get_category_for_nfr(nfr)
         
         if not cat_key:
-            # If no match found, let user select category
-            self.console.print("\n[bold]Select optimization category:[/bold]")
-            for key, value in self.optimization_options.items():
-                self.console.print(f"{key}. {value['name']}")
-            cat_key = self.input_helper.get_choice(
-                "Select category",
-                choices=list(self.optimization_options.keys())
-            )
+            cat_key = self._select_category_manually()
         
         if cat_key and cat_key in self.optimization_options:
             cat = self.optimization_options[cat_key]
-            self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
-            self.display_helper.display_list(cat["options"].values(), enumerate_items=True)
-            self.console.print("x. Skip")
+            optimizations = []
             
-            subcat_choices = list(cat["options"].keys()) + [self.input_helper.SKIP_CHOICE]
-            subcat_selected = self.input_helper.get_choice(
-                "Select subcategory",
-                choices=subcat_choices
-            )
-            
-            if subcat_selected != self.input_helper.SKIP_CHOICE:
+            while True:
+                self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
+                self.display_helper.display_list(cat["options"].values(), enumerate_items=True)
+                self.console.print("x. Done with this NFR")
+                
+                subcat_choices = list(cat["options"].keys()) + [self.input_helper.SKIP_CHOICE]
+                subcat_selected = self.input_helper.get_choice(
+                    "Select subcategory",
+                    choices=subcat_choices
+                )
+                
+                if subcat_selected == self.input_helper.SKIP_CHOICE:
+                    break
+                    
                 subcat = cat["options"][subcat_selected]
-                self.console.print(f"[dim]You selected: {subcat}[/dim]")
-                # Get optimization details
-                details = self.input_helper.get_multi_line_input(
-                    "Enter optimization details (one per line, x to finish):"
-                )
-                # Combine multiple lines into a single explanation
-                explanation = " ".join(details)
-                optimizations.append(f"{nfr} / {subcat}: {explanation}")
-                # Prompt for trade-offs for this subcategory
-                tradeoffs = self.input_helper.get_multi_line_input(
-                    "Enter trade-offs for this subcategory (one per line, x to finish):"
-                )
-                # Combine multiple lines into a single trade-offs consideration
-                tradeoff = " ".join(tradeoffs)
-                optimizations.append(f"{nfr} / {subcat} / Trade-offs: {tradeoff}")
+                optimizations.extend(self._process_subcategory(nfr, cat, subcat))
+            
+            return optimizations
         else:
-            # No mapped subcategory, just prompt for free text
-            self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")
-            req_optimizations = self.input_helper.get_multi_line_input(
-                "Enter optimizations (one per line, x to finish):"
-            )
-            optimizations = [f"{nfr}: {opt}" for opt in req_optimizations]
+            return self._process_free_text_optimization(nfr)
+
+    def execute(self, design_data):
+        """Add design optimizations."""
+        self.navigation_helper.display_step_header(5)
         
-        design_data["optimizations"] = optimizations
+        # Initialize optimizations list
+        all_optimizations = []
+        
+        # Get non-functional requirements
+        nonfunctional_reqs = design_data["requirements"]["nonfunctional"]
+        if not nonfunctional_reqs:
+            self.console.print("[yellow]No non-functional requirements defined. Please define requirements first.[/yellow]")
+            return design_data
+        
+        # Process each NFR
+        remaining_nfrs = nonfunctional_reqs.copy()
+        while remaining_nfrs:
+            # Display remaining NFRs for selection
+            self.console.print("\n[bold]Select NFR(s) to optimize for this component:[/bold]")
+            self.display_helper.display_list(remaining_nfrs, enumerate_items=True)
+            self.console.print("x. Done with all NFRs")
+            
+            nfr_choices = [str(i) for i in range(1, len(remaining_nfrs) + 1)] + [self.input_helper.SKIP_CHOICE]
+            nfr_selected = self.input_helper.get_choice(
+                "Select NFR",
+                choices=nfr_choices
+            )
+            
+            if nfr_selected == self.input_helper.SKIP_CHOICE:
+                break
+            
+            nfr = remaining_nfrs[int(nfr_selected) - 1]
+            self.console.print(f"\n[bold]Optimizing for NFR: {nfr}[/bold]")
+            
+            # Process the selected NFR
+            optimizations = self._process_nfr(nfr)
+            all_optimizations.extend(optimizations)
+            
+            # Remove processed NFR
+            remaining_nfrs.pop(int(nfr_selected) - 1)
+        
+        design_data["optimizations"] = all_optimizations
         return design_data 

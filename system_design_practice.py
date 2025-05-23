@@ -175,7 +175,7 @@ class SystemDesignPractice:
                 
                 # Generate and display Mermaid diagram
                 architecture_step = ArchitectureStep(self.console)
-                mermaid_diagram = architecture_step._generate_mermaid_diagram(self.current_design)
+                mermaid_diagram = architecture_step.diagram_generator.generate_mermaid_diagram(self.current_design)
                 self.console.print("\n[bold]Architecture Diagram:[/bold]")
                 self.console.print("```mermaid")
                 self.console.print(mermaid_diagram)
@@ -248,7 +248,7 @@ class SystemDesignPractice:
         # Select design question if not already set
         if not self.current_design["question"]:
             self.select_design_question(start_step)
-        
+                    
         # Display summary of previous steps
         self.console.print(f"\n{'Starting' if is_stub else 'Resuming'} from Step {start_step}\n")
         self.console.print("Previous Steps Summary:\n")

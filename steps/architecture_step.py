@@ -108,30 +108,31 @@ class ArchitectureStep(BaseStep):
                         
                     source = components_list[source_idx - 1]
                     target = components_list[target_idx - 1]
+                    
+                    # Get relationship details
+                    self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
+                    description_lines = self.input_helper.get_multi_line_input(
+                        "Enter relationship description (x to finish):"
+                    )
+                    description = description_lines[0] if description_lines else ""
+                    
+                    protocol_options = self.relationship_manager.get_protocol_options()
+                    self.display_helper.display_list(protocol_options, enumerate_items=True)
+                
+                    protocol_choice = self.input_helper.get_choice(
+                        "Select protocol",
+                        choices=[str(i) for i in range(1, len(protocol_options) + 1)]
+                    )
+                
+                    described_relationships.append(
+                        self.relationship_manager.format_relationship(
+                            source, target, description, protocol_options[int(protocol_choice) - 1]
+                        )
+                    )
                 except (ValueError, IndexError):
                     self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
                     continue
                 
-                # Get relationship details
-                self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
-                description_lines = self.input_helper.get_multi_line_input(
-                    "Enter relationship description (x to finish):"
-                )
-                description = description_lines[0] if description_lines else ""
-                
-                protocol_options = self.relationship_manager.get_protocol_options()
-                self.display_helper.display_list(protocol_options, enumerate_items=True)
-                
-                protocol_choice = self.input_helper.get_choice(
-                    "Select protocol",
-                    choices=[str(i) for i in range(1, len(protocol_options) + 1)]
-                )
-                
-                described_relationships.append(
-                    self.relationship_manager.format_relationship(
-                        source, target, description, protocol_options[int(protocol_choice) - 1]
-                    )
-                )
             elif choice == "2":  # Delete
                 if not described_relationships:
                     self.console.print("[yellow]No relationships to delete.[/yellow]")
