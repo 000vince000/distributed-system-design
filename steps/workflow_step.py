@@ -17,23 +17,22 @@ class WorkflowStep(BaseStep):
         seen_apis = set()  # Track unique APIs
         
         # Collect APIs from both internal and external
-        for req in design_data["requirements"]["functional"]:
-            if design_data["apis"]["internal"]:
-                for api in design_data["apis"]["internal"]:
-                    if api["endpoint"] not in seen_apis:
-                        seen_apis.add(api["endpoint"])
-                        # Format request/response summary
-                        req_summary = "{}" if not api["request"] else " ".join(api["request"])
-                        resp_summary = "{}" if not api["response"] else " ".join(api["response"])
-                        api_choices.append((f"Internal: {api['endpoint']} {req_summary}->{resp_summary}", api, req, "internal"))
-            if design_data["apis"]["external"]:
-                for api in design_data["apis"]["external"]:
-                    if api["endpoint"] not in seen_apis:
-                        seen_apis.add(api["endpoint"])
-                        # Format request/response summary
-                        req_summary = "{}" if not api["request"] else " ".join(api["request"])
-                        resp_summary = "{}" if not api["response"] else " ".join(api["response"])
-                        api_choices.append((f"External: {api['endpoint']} {req_summary}->{resp_summary}", api, req, "external"))
+        if design_data["apis"]["internal"]:
+            for api in design_data["apis"]["internal"]:
+                if api["endpoint"] not in seen_apis:
+                    seen_apis.add(api["endpoint"])
+                    # Format request/response summary
+                    req_summary = "{}" if not api["request"] else " ".join(api["request"])
+                    resp_summary = "{}" if not api["response"] else " ".join(api["response"])
+                    api_choices.append((f"Internal: {api['endpoint']} {req_summary}->{resp_summary}", api, api["requirement"], "internal"))
+        if design_data["apis"]["external"]:
+            for api in design_data["apis"]["external"]:
+                if api["endpoint"] not in seen_apis:
+                    seen_apis.add(api["endpoint"])
+                    # Format request/response summary
+                    req_summary = "{}" if not api["request"] else " ".join(api["request"])
+                    resp_summary = "{}" if not api["response"] else " ".join(api["response"])
+                    api_choices.append((f"External: {api['endpoint']} {req_summary}->{resp_summary}", api, api["requirement"], "external"))
 
         if not api_choices:
             self.console.print("[yellow]No APIs defined yet. Please define APIs first.[/yellow]")

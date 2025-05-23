@@ -132,7 +132,7 @@ class ArchitectureStep(BaseStep):
                 except (ValueError, IndexError):
                     self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
                     continue
-                
+            
             elif choice == "2":  # Delete
                 if not described_relationships:
                     self.console.print("[yellow]No relationships to delete.[/yellow]")

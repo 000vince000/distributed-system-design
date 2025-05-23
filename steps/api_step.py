@@ -55,19 +55,18 @@ class ApiStep(BaseStep):
                 "Enter response definition (one per line, x to finish):"
             )
             
-            # Store the complete API definition
+            # Store the complete API definition with the selected requirement
             api_definition = {
                 "endpoint": api,
                 "request": request_def,
-                "response": response_def
+                "response": response_def,
+                "requirement": selected_req  # Use the requirement selected in step 1
             }
             
             if api_type == "1":  # External API
                 design_data["apis"]["external"].append(api_definition)
-                requirement_apis[selected_req]["external"] = api_definition
             else:  # Internal API
                 design_data["apis"]["internal"].append(api_definition)
-                requirement_apis[selected_req]["internal"] = api_definition
             
             # Remove the addressed requirement
             remaining_reqs.pop(int(choice) - 1)
