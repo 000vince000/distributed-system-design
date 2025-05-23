@@ -9,7 +9,8 @@ class EdgeCasesStep(BaseStep):
             "3": "Message loss",
             "4": "Race condition",
             "5": "Deadlock",
-            "6": "Cascading failure"
+            "6": "Cascading failure",
+            "7": "Other"
         }
         self.large_scale_failures = {
             "1": "3P API down",
@@ -17,7 +18,8 @@ class EdgeCasesStep(BaseStep):
             "3": "DDoS",
             "4": "Node down",
             "5": "Cluster down",
-            "6": "Deployment failure"
+            "6": "Deployment failure",
+            "7": "Other"
         }
 
     def _get_failure_mitigations(self, failure_type: str, failures: dict):
@@ -28,11 +30,13 @@ class EdgeCasesStep(BaseStep):
         while available_failures:
             # Show available failures
             self.console.print(f"\n[bold]Select {failure_type} failures to address:[/bold]")
-            self.display_helper.display_list(available_failures.values(), enumerate_items=True)
+            # Create a new dict with sequential numbering
+            renumbered_failures = {str(i): v for i, v in enumerate(available_failures.values(), 1)}
+            self.display_helper.display_list(renumbered_failures.values(), enumerate_items=True)
             self.console.print("x. Done")
             
             # Get user's selection
-            choices = list(available_failures.keys()) + [self.input_helper.SKIP_CHOICE]
+            choices = list(renumbered_failures.keys()) + [self.input_helper.SKIP_CHOICE]
             selected = self.input_helper.get_choice(
                 "Select a failure",
                 choices=choices
@@ -41,8 +45,8 @@ class EdgeCasesStep(BaseStep):
             if selected == self.input_helper.SKIP_CHOICE:
                 break
                 
-            if selected in available_failures:
-                failure = available_failures[selected]
+            if selected in renumbered_failures:
+                failure = renumbered_failures[selected]
                 self.console.print(f"\n[bold]Failure:[/bold] {failure}")
                 prevention = []
                 mitigation = []
@@ -73,7 +77,9 @@ class EdgeCasesStep(BaseStep):
                     "mitigation": mitigation
                 })
                 # Remove the selected failure from available options
-                del available_failures[selected]
+                # Find the original key in available_failures
+                original_key = next(k for k, v in available_failures.items() if v == failure)
+                del available_failures[original_key]
         
         return selected_failures
 

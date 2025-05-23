@@ -13,7 +13,8 @@ class OptimizationStep(BaseStep):
                     "3": "Sharding",
                     "4": "Async processing",
                     "5": "Read replica",
-                    "6": "Loose coupling"
+                    "6": "Loose coupling",
+                    "7": "Other"
                 }
             },
             "2": {
@@ -25,7 +26,8 @@ class OptimizationStep(BaseStep):
                     "4": "ACID compliant storage",
                     "5": "FIFO queue",
                     "6": "Token leasing",
-                    "7": "Idempotent operations"
+                    "7": "Idempotent operations",
+                    "8": "Other"
                 }
             },
             "3": {
@@ -42,7 +44,8 @@ class OptimizationStep(BaseStep):
                     "9": "NoSQL DB",
                     "10": "DB read replica",
                     "11": "DB connection pooler",
-                    "12": "DB materialized view"
+                    "12": "DB materialized view",
+                    "13": "Other"
                 }
             },
             "4": {
@@ -51,7 +54,23 @@ class OptimizationStep(BaseStep):
                     "1": "Client browser caching",
                     "2": "Cookies",
                     "3": "Lazy load",
-                    "4": "Realtime notification"
+                    "4": "Realtime notification",
+                    "5": "Other"
+                }
+            },
+            "5": {
+                "name": "Reliability",
+                "options": {
+                    "1": "Rate limits with backoff",
+                    "2": "Multiple availability zones",
+                    "3": "Service failure detection & auto failover",
+                    "4": "Circuit breaker",
+                    "5": "Message delivery failure recovery",
+                    "6": "Use different hash keys for cache and db",
+                    "7": "Use safe deployment practice",
+                    "8": "Replicate storage",
+                    "9": "Use bulkheads for resource isolation",
+                    "10": "Other"
                 }
             }
         }
@@ -64,8 +83,10 @@ class OptimizationStep(BaseStep):
             "availability": "1",
             "fault tolerance": "1",
             "resilience": "1",
-            "reliability": "1",
-            "disaster recovery": "1",
+            "reliability": "5",
+            "disaster recovery": "5",
+            "fault tolerance": "5",
+            "resilience": "5",
             # Consistency
             "consistency": "2",
             "consistent": "2",
