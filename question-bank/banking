@@ -1,0 +1,3 @@
+How would you architect a system to detect and prevent fraudulent financial transactions in real-time?
+Focus areas: anomaly detection, real-time analytics, and alerting mechanisms.
+Considerations: integrating machine learning models, minimizing false positives/negatives, and ensuring low-latency processing.

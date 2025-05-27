@@ -1,0 +1,3 @@
+Design a system to process and store financial transactions from multiple banks in real-time.
+Focus areas: real-time data ingestion, normalization, storage, and ensuring data integrity across diverse banking systems.
+Considerations: handling varying data formats, ensuring ACID properties, and designing for scalability.
