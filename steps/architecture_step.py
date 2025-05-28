@@ -54,6 +54,12 @@ class ArchitectureStep(BaseStep):
         # Infer relationships from workflows
         described_relationships = self.relationship_manager.infer_relationships_from_workflows(design_data)
         
+        # Fix protocols for database relationships
+        for rel in described_relationships:
+            target = rel["relationship"].split("->")[1].strip()
+            if component_types[target] == "Database":
+                rel["protocol"] = "Query"
+
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
         components_list = sorted(components)
@@ -210,5 +216,8 @@ class ArchitectureStep(BaseStep):
         self.console.print(mermaid_diagram)
         self.console.print("```")
         self.console.print("\n[blue]View or edit this diagram at: https://mermaidchart.com[/blue]")
+        
+        # Store the mermaid diagram in the architecture data
+        design_data["architecture"]["mermaid_diagram"] = mermaid_diagram
         
         return design_data 
