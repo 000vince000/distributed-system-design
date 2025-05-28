@@ -143,16 +143,20 @@ class OptimizationStep(BaseStep):
         )
         # Combine multiple lines into a single explanation
         explanation = " ".join(details)
-        optimizations = [f"{nfr} / {subcat}: {explanation}"]
         
-        # Prompt for trade-offs for this subcategory
+        # Get trade-offs
         tradeoffs = self.input_helper.get_multi_line_input(
             "Enter trade-offs for this subcategory (one per line, x to finish):"
         )
-        # Combine multiple lines into a single trade-offs consideration
         tradeoff = " ".join(tradeoffs)
-        optimizations.append(f"{nfr} / {subcat} / Trade-offs: {tradeoff}")
-        return optimizations
+        
+        return {
+            "nfr": nfr,
+            "category": cat["name"],
+            "subcategory": subcat,
+            "explanation": explanation,
+            "tradeoffs": tradeoff
+        }
 
     def _process_free_text_optimization(self, nfr):
         """Process free text optimization when no category is found."""
@@ -160,7 +164,13 @@ class OptimizationStep(BaseStep):
         req_optimizations = self.input_helper.get_multi_line_input(
             "Enter optimizations (one per line, x to finish):"
         )
-        return [f"{nfr}: {opt}" for opt in req_optimizations]
+        return [{
+            "nfr": nfr,
+            "category": "Other",
+            "subcategory": "Free text",
+            "explanation": opt,
+            "tradeoffs": ""
+        } for opt in req_optimizations]
 
     def _process_nfr(self, nfr):
         """Process a single NFR optimization."""
@@ -188,7 +198,7 @@ class OptimizationStep(BaseStep):
                     break
                     
                 subcat = cat["options"][subcat_selected]
-                optimizations.extend(self._process_subcategory(nfr, cat, subcat))
+                optimizations.append(self._process_subcategory(nfr, cat, subcat))
             
             return optimizations
         else:
@@ -234,5 +244,9 @@ class OptimizationStep(BaseStep):
             # Remove processed NFR
             remaining_nfrs.pop(int(nfr_selected) - 1)
         
-        design_data["optimizations"] = all_optimizations
+        # Store optimizations in structured format
+        design_data["optimizations"] = {
+            "items": all_optimizations,
+            "summary": [f"{opt['nfr']} / {opt['subcategory']}: {opt['explanation']}" for opt in all_optimizations]
+        }
         return design_data 

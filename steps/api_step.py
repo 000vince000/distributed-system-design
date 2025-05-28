@@ -70,9 +70,5 @@ class ApiStep(BaseStep):
             
             # Remove the addressed requirement
             remaining_reqs.pop(int(choice) - 1)
-            
-            if remaining_reqs:
-                self.console.print("\n[bold]Remaining requirements:[/bold]")
-                self.display_helper.display_list(remaining_reqs)
         
         return design_data 
