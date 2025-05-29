@@ -1,26 +1,11 @@
 from .base_step import BaseStep
+from config.edge_cases_config import SMALL_SCALE_FAILURES, LARGE_SCALE_FAILURES
 
 class EdgeCasesStep(BaseStep):
     def __init__(self, console=None):
         super().__init__(console)
-        self.small_scale_failures = {
-            "1": "Memory leak",
-            "2": "Cache misses",
-            "3": "Message loss",
-            "4": "Race condition",
-            "5": "Deadlock",
-            "6": "Cascading failure",
-            "7": "Other"
-        }
-        self.large_scale_failures = {
-            "1": "3P API down",
-            "2": "Service overwhelmed",
-            "3": "DDoS",
-            "4": "Node down",
-            "5": "Cluster down",
-            "6": "Deployment failure",
-            "7": "Other"
-        }
+        self.small_scale_failures = SMALL_SCALE_FAILURES
+        self.large_scale_failures = LARGE_SCALE_FAILURES
 
     def _get_failure_mitigations(self, failure_type: str, failures: dict):
         """Get user's selected failures and their prevention/mitigation strategies."""
