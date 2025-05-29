@@ -9,9 +9,7 @@ OPTIMIZATION_OPTIONS = {
             "4": "Async processing",
             "5": "Read replica",
             "6": "Loose coupling",
-            "7": "Load shedding",
-            "8": "Request coalescing",
-            "9": "Other"
+            "7": "Other"
         }
     },
     "2": {
@@ -67,7 +65,9 @@ OPTIMIZATION_OPTIONS = {
             "7": "Use safe deployment practice",
             "8": "Replicate storage",
             "9": "Use bulkheads for resource isolation",
-            "10": "Other"
+            "10": "Load shedding",
+            "11": "Request coalescing",
+            "12": "Other"
         }
     }
 }
