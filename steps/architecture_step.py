@@ -60,6 +60,11 @@ class ArchitectureStep(BaseStep):
             if component_types[target] == "Database":
                 rel["protocol"] = "Query"
 
+        # update protocols for service to service relationships
+        for rel in described_relationships:
+            if component_types[rel["relationship"].split("->")[0].strip()] == "Service" and component_types[rel["relationship"].split("->")[1].strip()] == "Service":
+                rel["protocol"] = "gRPC"
+
         # Get relationship descriptions and protocols
         self.console.print("\n[bold]Specify relationship details:[/bold]")
         components_list = sorted(components)
