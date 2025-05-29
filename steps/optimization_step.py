@@ -182,13 +182,14 @@ class OptimizationStep(BaseStep):
         if cat_key and cat_key in self.optimization_options:
             cat = self.optimization_options[cat_key]
             optimizations = []
+            remaining_options = list(cat["options"].items())  # Keep as (key, value) pairs
             
-            while True:
+            while remaining_options:
                 self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
-                self.display_helper.display_list(cat["options"].values(), enumerate_items=True)
+                self.display_helper.display_list([opt[1] for opt in remaining_options], enumerate_items=True)
                 self.console.print("x. Done with this NFR")
                 
-                subcat_choices = list(cat["options"].keys()) + [self.input_helper.SKIP_CHOICE]
+                subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]
                 subcat_selected = self.input_helper.get_choice(
                     "Select subcategory",
                     choices=subcat_choices
@@ -196,9 +197,11 @@ class OptimizationStep(BaseStep):
                 
                 if subcat_selected == self.input_helper.SKIP_CHOICE:
                     break
-                    
-                subcat = cat["options"][subcat_selected]
-                optimizations.append(self._process_subcategory(nfr, cat, subcat))
+                
+                # Get the selected option and remove it from remaining options
+                selected_idx = int(subcat_selected) - 1
+                selected_key, selected_value = remaining_options.pop(selected_idx)
+                optimizations.append(self._process_subcategory(nfr, cat, selected_value))
             
             return optimizations
         else:
@@ -208,8 +211,9 @@ class OptimizationStep(BaseStep):
         """Add design optimizations."""
         self.navigation_helper.display_step_header(5)
         
-        # Initialize optimizations list
+        # Initialize optimizations list with hierarchical structure
         all_optimizations = []
+        nfr_optimizations = {}  # Temporary dict to group by NFR
         
         # Get non-functional requirements
         nonfunctional_reqs = design_data["requirements"]["nonfunctional"]
@@ -238,15 +242,80 @@ class OptimizationStep(BaseStep):
             self.console.print(f"\n[bold]Optimizing for NFR: {nfr}[/bold]")
             
             # Process the selected NFR
-            optimizations = self._process_nfr(nfr)
-            all_optimizations.extend(optimizations)
+            cat_key = self._get_category_for_nfr(nfr)
+            if not cat_key:
+                cat_key = self._select_category_manually()
+            
+            if cat_key and cat_key in self.optimization_options:
+                cat = self.optimization_options[cat_key]
+                optimizations = []
+                remaining_options = list(cat["options"].items())
+                
+                while remaining_options:
+                    self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
+                    self.display_helper.display_list([opt[1] for opt in remaining_options], enumerate_items=True)
+                    self.console.print("x. Done with this NFR")
+                    
+                    subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]
+                    subcat_selected = self.input_helper.get_choice(
+                        "Select subcategory",
+                        choices=subcat_choices
+                    )
+                    
+                    if subcat_selected == self.input_helper.SKIP_CHOICE:
+                        break
+                    
+                    selected_idx = int(subcat_selected) - 1
+                    selected_key, selected_value = remaining_options.pop(selected_idx)
+                    
+                    # Get optimization details
+                    details = self.input_helper.get_multi_line_input(
+                        "Enter optimization details (one per line, x to finish):"
+                    )
+                    explanation = " ".join(details)
+                    
+                    # Get trade-offs
+                    tradeoffs = self.input_helper.get_multi_line_input(
+                        "Enter trade-offs for this subcategory (one per line, x to finish):"
+                    )
+                    tradeoff = " ".join(tradeoffs)
+                    
+                    optimizations.append({
+                        "subcategory": selected_value,
+                        "explanation": explanation,
+                        "tradeoffs": tradeoff
+                    })
+                
+                # Store optimizations for this NFR
+                nfr_optimizations[nfr] = {
+                    "nfr": nfr,
+                    "category": cat["name"],
+                    "optimizations": optimizations
+                }
+            else:
+                # Handle free text optimization
+                req_optimizations = self.input_helper.get_multi_line_input(
+                    "Enter optimizations (one per line, x to finish):"
+                )
+                nfr_optimizations[nfr] = {
+                    "nfr": nfr,
+                    "category": "Other",
+                    "optimizations": [{
+                        "subcategory": "Free text",
+                        "explanation": opt,
+                        "tradeoffs": ""
+                    } for opt in req_optimizations]
+                }
             
             # Remove processed NFR
             remaining_nfrs.pop(int(nfr_selected) - 1)
         
+        # Convert dictionary to list for final storage
+        all_optimizations = list(nfr_optimizations.values())
+        
         # Store optimizations in structured format
         design_data["optimizations"] = {
-            "items": all_optimizations,
-            "summary": [f"{opt['nfr']} / {opt['subcategory']}: {opt['explanation']}" for opt in all_optimizations]
+            "items": all_optimizations
         }
+        
         return design_data 

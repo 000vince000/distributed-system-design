@@ -184,8 +184,17 @@ class SystemDesignPractice:
         elif step_number == 5:
             if "optimizations" in self.current_design:
                 self.console.print("\n[bold]Optimizations:[/bold]")
-                for opt in self.current_design["optimizations"]:
-                    self.console.print(f"- {opt}")
+                for nfr_group in self.current_design["optimizations"]["items"]:
+                    # Add NFR header with category
+                    self.console.print(f"### {nfr_group['nfr']} ({nfr_group['category']})")
+                    # Add each optimization under this NFR
+                    for opt in nfr_group["optimizations"]:
+                        self.console.print(f"- {opt['subcategory']}")
+                        self.console.print(f"  - Explanation: {opt['explanation']}")
+                        if opt['tradeoffs']:
+                            self.console.print(f"  - Trade-offs: {opt['tradeoffs']}")
+                    # Add blank line between NFR groups
+                    self.console.print("")
         
         elif step_number == 6:
             if "edge_cases" in self.current_design:
@@ -476,8 +485,17 @@ class SystemDesignPractice:
             # Format optimizations section
             optimizations = []
             if "optimizations" in self.current_design:
-                for opt in self.current_design["optimizations"]:
-                    optimizations.append(f"- {opt}")
+                for nfr_group in self.current_design["optimizations"]["items"]:
+                    # Add NFR header with category
+                    optimizations.append(f"### {nfr_group['nfr']} ({nfr_group['category']})")
+                    # Add each optimization under this NFR
+                    for opt in nfr_group["optimizations"]:
+                        optimizations.append(f"- {opt['subcategory']}")
+                        optimizations.append(f"  - Explanation: {opt['explanation']}")
+                        if opt['tradeoffs']:
+                            optimizations.append(f"  - Trade-offs: {opt['tradeoffs']}")
+                    # Add blank line between NFR groups
+                    optimizations.append("")
             optimizations_str = "\n".join(optimizations)
 
             # Format edge cases section
