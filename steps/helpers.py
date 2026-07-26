@@ -1,4 +1,5 @@
 from rich.console import Console
+from rich.markup import escape
 from rich.prompt import Prompt
 
 class InputHelper:
@@ -59,19 +60,19 @@ class DisplayHelper:
         """
         for i, item in enumerate(items, 1):
             if enumerate_items:
-                self.console.print(f"{i}. {item}")
+                self.console.print(f"{i}. {escape(item)}")
             else:
-                self.console.print(f"{prefix} {item}")
+                self.console.print(f"{prefix} {escape(item)}")
     
     def display_nested_list(self, items: list, prefix: str = "-", indent: str = "  "):
         """Display a nested list of items with indentation."""
         for item in items:
             if isinstance(item, dict):
-                self.console.print(f"{prefix} {item['name']}")
+                self.console.print(f"{prefix} {escape(item['name'])}")
                 for subitem in item.get('items', []):
-                    self.console.print(f"{indent}{prefix} {subitem}")
+                    self.console.print(f"{indent}{prefix} {escape(subitem)}")
             else:
-                self.console.print(f"{prefix} {item}")
+                self.console.print(f"{prefix} {escape(item)}")
 
 class StepNavigationHelper:
     def __init__(self, console: Console, prompt: Prompt):

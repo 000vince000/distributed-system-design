@@ -1,3 +1,4 @@
+from rich.markup import escape
 from .base_step import BaseStep
 from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
 
@@ -46,13 +47,13 @@ class WorkflowStep(BaseStep):
         if design_data["workflows"]:
             self.console.print("\n[bold]Existing Workflows:[/bold]")
             for workflow in design_data["workflows"]:
-                self.console.print(f"\nAPI: {workflow['api']}")
-                self.console.print(f"Requirement: {workflow['requirement']}")
+                self.console.print(f"\nAPI: {escape(workflow['api'])}")
+                self.console.print(f"Requirement: {escape(workflow['requirement'])}")
                 self.console.print("Steps:")
                 for step in workflow["steps"]:
-                    self.console.print(f"  {step['step']}")
+                    self.console.print(f"  {escape(step['step'])}")
                     for substep in step["substeps"]:
-                        self.console.print(f"    - {substep}")
+                        self.console.print(f"    - {escape(substep)}")
 
         # Filter out APIs that already have workflows
         available_apis = []
@@ -67,7 +68,7 @@ class WorkflowStep(BaseStep):
 
         self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
         for i, (api_desc, _, _, api_type) in enumerate(available_apis, 1):
-            self.console.print(f"{i}. {api_desc} ({api_type})")
+            self.console.print(f"{i}. {escape(api_desc)} ({api_type})")
 
         while True:
             # Only show 'x' option if at least one workflow is defined
@@ -86,8 +87,8 @@ class WorkflowStep(BaseStep):
             selected_api = available_apis[int(choice) - 1]
             api_desc, api, req, api_type = selected_api
             
-            self.console.print(f"\n[bold]Designing workflow for: {api_desc}[/bold]")
-            self.console.print(f"Requirement: {req}")
+            self.console.print(f"\n[bold]Designing workflow for: {escape(api_desc)}[/bold]")
+            self.console.print(f"Requirement: {escape(req)}")
             
             # Get high-level workflow steps
             workflow_steps = self.input_helper.get_multi_line_input(
@@ -97,13 +98,44 @@ class WorkflowStep(BaseStep):
             # For each step, get detailed definition with substeps
             step_definitions = []
             for i, step in enumerate(workflow_steps, 1):
-                self.console.print(f"\n[bold]Step {i}: {step}[/bold]")
+                self.console.print(f"\n[bold]Step {i}: {escape(step)}[/bold]")
                 substeps = self.input_helper.get_multi_line_input(
                     "Enter substeps (one per line, x to finish):"
                 )
+
+                # Discover internal/downstream APIs this step needs, on the spot
+                step_internal_apis = []
+                while self.input_helper.get_choice(
+                    f"Does '{step}' require a new internal/downstream API call?",
+                    choices=["y", "n"]
+                ) == "y":
+                    internal_endpoint = self.input_helper.get_multi_line_input(
+                        "Enter internal API endpoint:"
+                    )
+                    if not internal_endpoint:
+                        break
+
+                    internal_request = self.input_helper.get_multi_line_input(
+                        "Enter request definition (one per line, x to finish):"
+                    )
+                    internal_response = self.input_helper.get_multi_line_input(
+                        "Enter response definition (one per line, x to finish):"
+                    )
+
+                    internal_api = {
+                        "endpoint": internal_endpoint[0],
+                        "request": internal_request,
+                        "response": internal_response,
+                        "requirement": req,
+                        "workflow_api": api["endpoint"]
+                    }
+                    design_data["apis"]["internal"].append(internal_api)
+                    step_internal_apis.append(internal_api["endpoint"])
+
                 step_definitions.append({
                     "step": step,
-                    "substeps": substeps
+                    "substeps": substeps,
+                    "internal_apis": step_internal_apis
                 })
             
             workflow = {
@@ -117,14 +149,14 @@ class WorkflowStep(BaseStep):
             
             # Display summary of the current workflow
             self.console.print("\n[bold]Workflow Summary:[/bold]")
-            self.console.print(f"API: {workflow['api']}")
-            self.console.print(f"Requirement: {workflow['requirement']}")
+            self.console.print(f"API: {escape(workflow['api'])}")
+            self.console.print(f"Requirement: {escape(workflow['requirement'])}")
             self.console.print("\nSteps:")
             for step_def in workflow["steps"]:
-                self.console.print(f"\n  {step_def['step']}")
+                self.console.print(f"\n  {escape(step_def['step'])}")
                 if step_def["substeps"]:
                     for substep in step_def["substeps"]:
-                        self.console.print(f"    - {substep}")
+                        self.console.print(f"    - {escape(substep)}")
             
             # Update available APIs list
             available_apis = []
@@ -140,6 +172,6 @@ class WorkflowStep(BaseStep):
             # Display available APIs again before next selection
             self.console.print("\n[bold]Available APIs:[/bold]")
             for i, (api_desc, _, _, api_type) in enumerate(available_apis, 1):
-                self.console.print(f"{i}. {api_desc} ({api_type})")
+                self.console.print(f"{i}. {escape(api_desc)} ({api_type})")
         
         return design_data 
