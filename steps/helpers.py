@@ -1,6 +1,20 @@
 from rich.console import Console
 from rich.markup import escape
 from rich.prompt import Prompt
+from rich.rule import Rule
+from rich.theme import Theme
+
+# Centralized color palette. Use these semantic names (e.g. "[warning]...")
+# in console.print calls instead of raw color names, so the look can be
+# retuned in one place.
+APP_THEME = Theme({
+    "warning": "yellow",
+    "success": "green",
+    "error": "bold red",
+    "muted": "dim",
+    "info": "blue",
+    "header": "bold cyan",
+})
 
 
 class QuitRequested(Exception):
@@ -32,16 +46,17 @@ class InputHelper:
             if stripped == self.UNDO_CHOICE:
                 if lines:
                     removed = lines.pop()
-                    self.console.print(f"[yellow]Removed: {removed}[/yellow]")
+                    self.console.print(f"[warning]Removed: {removed}[/warning]")
                 else:
-                    self.console.print("[yellow]Nothing to undo.[/yellow]")
+                    self.console.print("[warning]Nothing to undo.[/warning]")
                 continue
             if not stripped:  # Blank line finishes input
                 break
             lines.append(stripped)
         return lines
 
-    def get_choice(self, prompt: str, choices: list, default: str = None, skip_prompt: bool = False) -> str:
+    def get_choice(self, prompt: str, choices: list, default: str = None, skip_prompt: bool = False,
+                   show_choices: bool = True) -> str:
         """Get a choice from a list of options.
 
         Args:
@@ -49,6 +64,9 @@ class InputHelper:
             choices: List of valid choices
             default: Default choice if only one option
             skip_prompt: Whether to add skip option to prompt
+            show_choices: Whether to echo the choice list in brackets after the
+                prompt. Set to False when the choices were already displayed
+                as a numbered list just above, to avoid showing them twice.
         """
         # Add skip choice if not present and skip_prompt is True
         if skip_prompt and self.SKIP_CHOICE not in choices:
@@ -65,7 +83,8 @@ class InputHelper:
 
         prompt_kwargs = {
             "prompt": prompt + f" (or {', '.join(hints)})",
-            "choices": choices
+            "choices": choices,
+            "show_choices": show_choices
         }
         if default and len(choices) == 1:
             prompt_kwargs["default"] = default
@@ -117,7 +136,8 @@ class StepNavigationHelper:
     
     def display_step_header(self, step_number: int):
         """Display the header for a step."""
-        self.console.print(f"\n[bold]Step {step_number}: {self.step_names[step_number]}[/bold]")
+        self.console.print()
+        self.console.print(Rule(f"Step {step_number}: {self.step_names[step_number]}", style="header"))
     
     def ask_continue(self) -> bool:
         """Ask if user wants to continue to next step."""

@@ -32,7 +32,7 @@ class WorkflowStep(BaseStep):
                     api_choices.append((f"External: {api['endpoint']} {req_summary}->{resp_summary}", api, api["requirement"], "external"))
 
         if not api_choices:
-            self.console.print("[yellow]No APIs defined yet. Please define APIs first.[/yellow]")
+            self.console.print("[warning]No APIs defined yet. Please define APIs first.[/warning]")
             return design_data
 
         # Initialize workflows list if it doesn't exist
@@ -59,7 +59,7 @@ class WorkflowStep(BaseStep):
                 available_apis.append((api_desc, api, req, api_type))
 
         if not available_apis:
-            self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
+            self.console.print("\n[warning]No more APIs available to design workflows for.[/warning]")
             return design_data
 
         self.console.print("\n[bold]Select an API to design its workflow:[/bold]")
@@ -74,7 +74,8 @@ class WorkflowStep(BaseStep):
             
             choice = self.input_helper.get_choice(
                 "Select an API to design its workflow" + (" (or 'x' to finish)" if design_data["workflows"] else ""),
-                choices=choices
+                choices=choices,
+                show_choices=False
             )
             
             if choice == self.input_helper.SKIP_CHOICE:
@@ -160,7 +161,7 @@ class WorkflowStep(BaseStep):
                     available_apis.append((api_desc, api, req, api_type))
             
             if not available_apis:
-                self.console.print("\n[yellow]No more APIs available to design workflows for.[/yellow]")
+                self.console.print("\n[warning]No more APIs available to design workflows for.[/warning]")
                 break
                 
             # Display available APIs again before next selection

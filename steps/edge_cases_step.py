@@ -24,7 +24,8 @@ class EdgeCasesStep(BaseStep):
             choices = list(renumbered_failures.keys()) + [self.input_helper.SKIP_CHOICE]
             selected = self.input_helper.get_choice(
                 "Select a failure",
-                choices=choices
+                choices=choices,
+                show_choices=False
             )
             
             if selected == self.input_helper.SKIP_CHOICE:
@@ -144,10 +145,10 @@ class EdgeCasesStep(BaseStep):
                 for edge_case in design_data["edge_cases"]["edge_cases"]:
                     self.console.print(f"- [bold]{edge_case['edge_case']}[/bold]")
                     if edge_case["prevention"]:
-                        self.console.print("    [green]Prevention:[/green]")
+                        self.console.print("    [success]Prevention:[/success]")
                         self.display_helper.display_list(edge_case["prevention"], prefix="      -")
                     if edge_case["mitigation"]:
-                        self.console.print("    [yellow]Mitigation:[/yellow]")
+                        self.console.print("    [warning]Mitigation:[/warning]")
                         self.display_helper.display_list(edge_case["mitigation"], prefix="      -")
             
             if design_data["edge_cases"]["small_scale"]:
@@ -155,10 +156,10 @@ class EdgeCasesStep(BaseStep):
                 for failure in design_data["edge_cases"]["small_scale"]:
                     self.console.print(f"- [bold]{failure['failure']}[/bold]")
                     if failure.get("prevention"):
-                        self.console.print("    [green]Prevention:[/green]")
+                        self.console.print("    [success]Prevention:[/success]")
                         self.display_helper.display_list(failure["prevention"], prefix="      -")
                     if failure.get("mitigation"):
-                        self.console.print("    [yellow]Mitigation:[/yellow]")
+                        self.console.print("    [warning]Mitigation:[/warning]")
                         self.display_helper.display_list(failure["mitigation"], prefix="      -")
             
             if design_data["edge_cases"]["large_scale"]:
@@ -166,10 +167,10 @@ class EdgeCasesStep(BaseStep):
                 for failure in design_data["edge_cases"]["large_scale"]:
                     self.console.print(f"- [bold]{failure['failure']}[/bold]")
                     if failure.get("prevention"):
-                        self.console.print("    [green]Prevention:[/green]")
+                        self.console.print("    [success]Prevention:[/success]")
                         self.display_helper.display_list(failure["prevention"], prefix="      -")
                     if failure.get("mitigation"):
-                        self.console.print("    [yellow]Mitigation:[/yellow]")
+                        self.console.print("    [warning]Mitigation:[/warning]")
                         self.display_helper.display_list(failure["mitigation"], prefix="      -")
         
         return design_data 

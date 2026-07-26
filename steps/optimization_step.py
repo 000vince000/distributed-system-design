@@ -20,7 +20,7 @@ class OptimizationStep(BaseStep):
                     cat_key = self.nfr_to_cat[key]
                     break
         
-        self.console.print(f"[dim]Debug: NFR '{nfr}' -> cat_key '{cat_key}'[/dim]")
+        self.console.print(f"[muted]Debug: NFR '{nfr}' -> cat_key '{cat_key}'[/muted]")
         return cat_key
 
     def _select_category_manually(self):
@@ -30,12 +30,13 @@ class OptimizationStep(BaseStep):
             self.console.print(f"{key}. {value['name']}")
         return self.input_helper.get_choice(
             "Select category",
-            choices=list(self.optimization_options.keys())
+            choices=list(self.optimization_options.keys()),
+            show_choices=False
         )
 
     def _process_subcategory(self, nfr, cat, subcat):
         """Process a single subcategory optimization."""
-        self.console.print(f"[dim]You selected: {subcat}[/dim]")
+        self.console.print(f"[muted]You selected: {subcat}[/muted]")
         # Get optimization details
         details = self.input_helper.get_multi_line_input(
             "Enter optimization details (one per line, empty line to finish):"
@@ -59,7 +60,7 @@ class OptimizationStep(BaseStep):
 
     def _process_free_text_optimization(self, nfr):
         """Process free text optimization when no category is found."""
-        self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")
+        self.console.print("[muted]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/muted]")
         req_optimizations = self.input_helper.get_multi_line_input(
             "Enter optimizations (one per line, empty line to finish):"
         )
@@ -91,7 +92,8 @@ class OptimizationStep(BaseStep):
                 subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]
                 subcat_selected = self.input_helper.get_choice(
                     "Select subcategory",
-                    choices=subcat_choices
+                    choices=subcat_choices,
+                    show_choices=False
                 )
                 
                 if subcat_selected == self.input_helper.SKIP_CHOICE:
@@ -117,7 +119,7 @@ class OptimizationStep(BaseStep):
         # Get non-functional requirements
         nonfunctional_reqs = design_data["requirements"]["nonfunctional"]
         if not nonfunctional_reqs:
-            self.console.print("[yellow]No non-functional requirements defined. Please define requirements first.[/yellow]")
+            self.console.print("[warning]No non-functional requirements defined. Please define requirements first.[/warning]")
             return design_data
         
         # Process each NFR
@@ -131,7 +133,8 @@ class OptimizationStep(BaseStep):
             nfr_choices = [str(i) for i in range(1, len(remaining_nfrs) + 1)] + [self.input_helper.SKIP_CHOICE]
             nfr_selected = self.input_helper.get_choice(
                 "Select NFR",
-                choices=nfr_choices
+                choices=nfr_choices,
+                show_choices=False
             )
             
             if nfr_selected == self.input_helper.SKIP_CHOICE:
@@ -158,7 +161,8 @@ class OptimizationStep(BaseStep):
                     subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]
                     subcat_selected = self.input_helper.get_choice(
                         "Select subcategory",
-                        choices=subcat_choices
+                        choices=subcat_choices,
+                        show_choices=False
                     )
                     
                     if subcat_selected == self.input_helper.SKIP_CHOICE:

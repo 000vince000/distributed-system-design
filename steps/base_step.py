@@ -1,10 +1,10 @@
 from rich.console import Console
 from rich.prompt import Prompt
-from .helpers import InputHelper, DisplayHelper, StepNavigationHelper
+from .helpers import APP_THEME, InputHelper, DisplayHelper, StepNavigationHelper
 
 class BaseStep:
     def __init__(self, console=None):
-        self.console = console or Console()
+        self.console = console or Console(theme=APP_THEME)
         self.prompt = Prompt()
         # Initialize helpers
         self.input_helper = InputHelper(self.console, self.prompt)

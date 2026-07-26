@@ -17,7 +17,7 @@ class ArchitectureStep(BaseStep):
         
         # Check if architecture is already defined
         if "architecture" in design_data and design_data["architecture"]:
-            self.console.print("[green]Architecture is already defined. Moving to next step.[/green]")
+            self.console.print("[success]Architecture is already defined. Moving to next step.[/success]")
             return design_data
         
         # Extract components from workflows, tracking which workflow/step each came from
@@ -27,14 +27,14 @@ class ArchitectureStep(BaseStep):
             for step in workflow["steps"]:
                 parsed = self.relationship_manager.parse_step(step["step"])
                 if not parsed:
-                    self.console.print(f"[yellow]Warning: could not parse step '{step['step']}' as 'A -> B: action' — skipping.[/yellow]")
+                    self.console.print(f"[warning]Warning: could not parse step '{step['step']}' as 'A -> B: action' — skipping.[/warning]")
                     continue
                 for comp in set((parsed[0], parsed[1])):
                     components.add(comp)
                     component_sources.setdefault(comp, []).append((workflow["api"], step["step"]))
 
         if not components:
-            self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
+            self.console.print("[warning]No components found in workflows. Please define workflows first.[/warning]")
             return design_data
 
         # Get component types
@@ -66,17 +66,18 @@ class ArchitectureStep(BaseStep):
             )
             if auto_type:
                 component_types[comp] = auto_type
-                self.console.print(f"\n[green]Auto-detected type for {escape(comp)}: {auto_type}[/green]")
+                self.console.print(f"\n[success]Auto-detected type for {escape(comp)}: {auto_type}[/success]")
                 continue
 
             self.console.print(f"\nSelect type for {escape(comp)}:")
             for workflow_api, step_text in component_sources.get(comp, []):
-                self.console.print(f"  [dim]{escape(workflow_api)}: {escape(step_text)}[/dim]")
+                self.console.print(f"  [muted]{escape(workflow_api)}: {escape(step_text)}[/muted]")
             self.display_helper.display_list(type_options, enumerate_items=True)
             
             type_choice = self.input_helper.get_choice(
                 "Select type",
-                choices=[str(i) for i in range(1, len(type_options) + 1)]
+                choices=[str(i) for i in range(1, len(type_options) + 1)],
+                show_choices=False
             )
             component_types[comp] = type_options[int(type_choice) - 1]
         
@@ -123,7 +124,8 @@ class ArchitectureStep(BaseStep):
             
             choice = self.input_helper.get_choice(
                 "Select option",
-                choices=["1", "2", "3", self.input_helper.SKIP_CHOICE]
+                choices=["1", "2", "3", self.input_helper.SKIP_CHOICE],
+                show_choices=False
             )
             
             if choice == self.input_helper.SKIP_CHOICE:
@@ -133,8 +135,9 @@ class ArchitectureStep(BaseStep):
                 self.console.print("\nEnter relationship in format 'source->target' (e.g., '1->3')")
                 relationship = self.input_helper.get_choice(
                     "Select relationship",
-                    choices=[f"{i}->{j}" for i in range(1, len(components_list) + 1) 
-                            for j in range(1, len(components_list) + 1) if i != j]
+                    choices=[f"{i}->{j}" for i in range(1, len(components_list) + 1)
+                            for j in range(1, len(components_list) + 1) if i != j],
+                    show_choices=False
                 )
                 
                 try:
@@ -143,7 +146,7 @@ class ArchitectureStep(BaseStep):
                     target_idx = int(target_idx.strip())
                     
                     if not (1 <= source_idx <= len(components_list) and 1 <= target_idx <= len(components_list)):
-                        self.console.print("[red]Invalid component numbers. Please use numbers from the list above.[/red]")
+                        self.console.print("[error]Invalid component numbers. Please use numbers from the list above.[/error]")
                         continue
                         
                     source = components_list[source_idx - 1]
@@ -161,7 +164,8 @@ class ArchitectureStep(BaseStep):
                 
                     protocol_choice = self.input_helper.get_choice(
                         "Select protocol",
-                        choices=[str(i) for i in range(1, len(protocol_options) + 1)]
+                        choices=[str(i) for i in range(1, len(protocol_options) + 1)],
+                        show_choices=False
                     )
                 
                     described_relationships.append(
@@ -170,36 +174,38 @@ class ArchitectureStep(BaseStep):
                         )
                     )
                 except (ValueError, IndexError):
-                    self.console.print("[red]Invalid format. Please use 'source->target' (e.g., '1->3')[/red]")
+                    self.console.print("[error]Invalid format. Please use 'source->target' (e.g., '1->3')[/error]")
                     continue
             
             elif choice == "2":  # Delete
                 if not described_relationships:
-                    self.console.print("[yellow]No relationships to delete.[/yellow]")
+                    self.console.print("[warning]No relationships to delete.[/warning]")
                     continue
                     
                 rel_idx = self.input_helper.get_choice(
                     "Enter relationship number to delete",
-                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)],
+                    show_choices=False
                 )
                 del described_relationships[int(rel_idx) - 1]
-                self.console.print("[green]Relationship deleted.[/green]")
+                self.console.print("[success]Relationship deleted.[/success]")
                 
             elif choice == "3":  # Edit
                 if not described_relationships:
-                    self.console.print("[yellow]No relationships to edit.[/yellow]")
+                    self.console.print("[warning]No relationships to edit.[/warning]")
                     continue
                     
                 rel_idx = self.input_helper.get_choice(
                     "Enter relationship number to edit",
-                    choices=[str(i) for i in range(1, len(described_relationships) + 1)]
+                    choices=[str(i) for i in range(1, len(described_relationships) + 1)],
+                    show_choices=False
                 )
                 rel = described_relationships[int(rel_idx) - 1]
                 
                 # Edit description
                 self.console.print(f"\n[bold]Current description: {rel['description']}[/bold]")
                 description_lines = self.input_helper.get_multi_line_input(
-                    "Enter new description (x to keep current):"
+                    "Enter new description (empty line to keep current):"
                 )
                 if description_lines:
                     rel["description"] = description_lines[0]
@@ -212,7 +218,8 @@ class ArchitectureStep(BaseStep):
                 protocol_choice = self.input_helper.get_choice(
                     "Select protocol (x to keep current)",
                     choices=[str(i) for i in range(1, len(protocol_options) + 1)] + [self.input_helper.SKIP_CHOICE],
-                    skip_prompt=True
+                    skip_prompt=True,
+                    show_choices=False
                 )
                 
                 if protocol_choice != self.input_helper.SKIP_CHOICE:
@@ -228,7 +235,7 @@ class ArchitectureStep(BaseStep):
                 self.console.print(f"\n[bold]{type_} Schema for {comp}:[/bold]")
                 self.console.print("Enter tables (TableName: field1:type, field2:type, ...)")
                 self.console.print("Example: Users: id:int, username:string, email:string")
-                self.console.print("Enter 'x' when done with this component")
+                self.console.print("Press Enter on a blank line when done with this component")
                 
                 component_schema = self.input_helper.get_multi_line_input(
                     f"Enter schema for {comp} (empty line to finish):"
@@ -249,7 +256,7 @@ class ArchitectureStep(BaseStep):
         self.console.print("```mermaid")
         self.console.print(mermaid_diagram)
         self.console.print("```")
-        self.console.print("\n[blue]View or edit this diagram at: https://mermaidchart.com[/blue]")
+        self.console.print("\n[info]View or edit this diagram at: https://mermaidchart.com[/info]")
         
         # Store the mermaid diagram in the architecture data
         design_data["architecture"]["mermaid_diagram"] = mermaid_diagram

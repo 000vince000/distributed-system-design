@@ -25,7 +25,8 @@ class ApiStep(BaseStep):
             choices = [str(i) for i in range(1, len(remaining_reqs) + 1)] + [self.input_helper.SKIP_CHOICE]
             choice = self.input_helper.get_choice(
                 "Select a requirement to design an API for",
-                choices=choices
+                choices=choices,
+                show_choices=False
             )
 
             if choice == self.input_helper.SKIP_CHOICE:

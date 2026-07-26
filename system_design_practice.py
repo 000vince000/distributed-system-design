@@ -15,12 +15,12 @@ from steps.workflow_step import WorkflowStep
 from steps.architecture_step import ArchitectureStep
 from steps.optimization_step import OptimizationStep
 from steps.edge_cases_step import EdgeCasesStep
-from steps.helpers import QuitRequested
+from steps.helpers import APP_THEME, QuitRequested
 from stubs.design_stubs import get_step1_stub, get_step2_stub, get_step3_stub, get_step4_stub, get_step5_stub, get_step6_stub
 
 class SystemDesignPractice:
     def __init__(self):
-        self.console = Console()
+        self.console = Console(theme=APP_THEME)
         self.prompt = Prompt()
         self.start_time = None
         self.design_questions = self._load_questions()
@@ -62,7 +62,7 @@ class SystemDesignPractice:
         question_bank_dir = "question-bank"
         
         if not os.path.exists(question_bank_dir):
-            self.console.print("[yellow]Warning: question-bank directory not found. Using default questions.[/yellow]")
+            self.console.print("[warning]Warning: question-bank directory not found. Using default questions.[/warning]")
             return {
                 "1": "Design Facebook Newsfeed",
                 "2": "Design Airbnb",
@@ -83,7 +83,7 @@ class SystemDesignPractice:
                         title = content.split('\n')[0]
                         questions[str(len(questions) + 1)] = title
         except Exception as e:
-            self.console.print(f"[red]Error loading questions: {str(e)}[/red]")
+            self.console.print(f"[error]Error loading questions: {str(e)}[/error]")
             return {
                 "1": "Design Facebook Newsfeed",
                 "2": "Design Airbnb",
@@ -109,7 +109,7 @@ class SystemDesignPractice:
                         if content.split('\n')[0] == self.design_questions[question_key]:
                             return content
         except Exception as e:
-            self.console.print(f"[yellow]Warning: Could not load question details: {str(e)}[/yellow]")
+            self.console.print(f"[warning]Warning: Could not load question details: {str(e)}[/warning]")
         
         return self.design_questions[question_key]
 
@@ -124,7 +124,7 @@ class SystemDesignPractice:
             6: "Edge Cases"
         }
         
-        self.console.print(f"\n[bold blue]Step {step_number}: {step_names[step_number]} Summary[/bold blue]")
+        self.console.print(f"\n[header]Step {step_number}: {step_names[step_number]} Summary[/header]")
         
         if step_number == 1:
             self.console.print("\n[bold]Functional Requirements:[/bold]")
@@ -244,7 +244,7 @@ class SystemDesignPractice:
                         return data['step'] + 1  # That step is done, move on
                     return data['step']  # That step was interrupted, redo it
         except Exception as e:
-            self.console.print(f"[red]Error loading design file: {str(e)}[/red]")
+            self.console.print(f"[error]Error loading design file: {str(e)}[/error]")
             return 1
 
     def start(self, filename: str, is_stub: bool = False):
@@ -302,7 +302,7 @@ class SystemDesignPractice:
             self.generate_report()
             self._cleanup_partial_files(self.current_design["question"])
         except QuitRequested:
-            self.console.print("\n[yellow]Exiting gracefully. Your progress has been saved.[/yellow]")
+            self.console.print("\n[warning]Exiting gracefully. Your progress has been saved.[/warning]")
 
     def _save_partial_design(self, step_number: int, completed: bool = True):
         """Save partial design after completing (or being interrupted during) a step."""
@@ -323,9 +323,9 @@ class SystemDesignPractice:
                 if filename.startswith(f"partial_{question_name}_") and filename.endswith(".json"):
                     filepath = os.path.join("design_reports", filename)
                     os.remove(filepath)
-                    self.console.print(f"[yellow]Deleted old partial file: {filename}[/yellow]")
+                    self.console.print(f"[warning]Deleted old partial file: {filename}[/warning]")
         except Exception as e:
-            self.console.print(f"[yellow]Warning: Could not clean up old partial files: {str(e)}[/yellow]")
+            self.console.print(f"[warning]Warning: Could not clean up old partial files: {str(e)}[/warning]")
         
         # Save new partial file
         filename = f"design_reports/partial_{question_name}_step{step_number}_{timestamp}.json"
@@ -337,7 +337,7 @@ class SystemDesignPractice:
                 'start_time': self.start_time
             }, f, indent=2)
         
-        self.console.print(f"\n[yellow]Partial design saved to: {filename}[/yellow]")
+        self.console.print(f"\n[warning]Partial design saved to: {filename}[/warning]")
 
     def _cleanup_partial_files(self, question_name: str):
         """Clean up partial files for the current design."""
@@ -351,7 +351,7 @@ class SystemDesignPractice:
                 if filename.startswith(f"partial_design_{question_name}_") and filename.endswith(".json"):
                     os.remove(os.path.join("design_reports", filename))
         except Exception as e:
-            self.console.print(f"[yellow]Warning: Could not clean up partial files: {str(e)}[/yellow]")
+            self.console.print(f"[warning]Warning: Could not clean up partial files: {str(e)}[/warning]")
 
     def select_design_question(self, start_step: int = 1):
         """Select a design question to work on. Does not execute steps —
@@ -417,7 +417,7 @@ class SystemDesignPractice:
             
             return "\n".join(diagram)
         except Exception as e:
-            self.console.print(f"[yellow]Warning: Could not generate diagram: {str(e)}[/yellow]")
+            self.console.print(f"[warning]Warning: Could not generate diagram: {str(e)}[/warning]")
             return "graph TD\n    A[Error generating diagram]"
 
     def _format_edge_case_section(self, section_title, items, is_failure=False):
@@ -584,12 +584,12 @@ class SystemDesignPractice:
             with open(filename, 'w') as f:
                 f.write(report)
 
-            self.console.print(f"\n[green]Report generated successfully![/green]")
+            self.console.print(f"\n[success]Report generated successfully![/success]")
             self.console.print(f"File saved as: {filename}")
             self.console.print("\n[bold]Report Preview:[/bold]")
             self.console.print(Markdown(report))
         except Exception as e:
-            self.console.print(f"[red]Error generating report: {str(e)}[/red]")
+            self.console.print(f"[error]Error generating report: {str(e)}[/error]")
 
 def main():
     parser = argparse.ArgumentParser(description='System Design Practice Tool')
