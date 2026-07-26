@@ -118,10 +118,10 @@ class ArchitectureStep(BaseStep):
                 "Add new relationship",
                 "Delete relationship",
                 "Edit relationship",
-                "Done defining relationships"
             ]
             self.display_helper.display_list(options, enumerate_items=True)
-            
+            self.console.print(f"{self.input_helper.SKIP_CHOICE}. Done defining relationships")
+
             choice = self.input_helper.get_choice(
                 "Select option",
                 choices=["1", "2", "3", self.input_helper.SKIP_CHOICE],
