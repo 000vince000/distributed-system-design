@@ -1,0 +1,7 @@
+.venv/
+path/
+steps/__pycache__/
+design_reports/*
+.git.corrupt-backup-20260725/*
+config/__pycache__/
+stubs/__pycache__/
