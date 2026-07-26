@@ -53,11 +53,11 @@ def get_step3_stub():
                 "requirement": "User authentication",
                 "steps": [
                     {
-                        "step": "Auth Service",
+                        "step": "Client -> Auth Service: authenticate",
                         "substeps": ["Validate credentials", "Generate token"]
                     },
                     {
-                        "step": "Database",
+                        "step": "Auth Service -> Database: store session",
                         "substeps": ["Store session", "Update last login"]
                     }
                 ]
@@ -67,19 +67,15 @@ def get_step3_stub():
                 "requirement": "Data storage",
                 "steps": [
                     {
-                        "step": "Load Balancer",
+                        "step": "Load Balancer -> Application Server: forward request",
                         "substeps": ["Route request", "Check health"]
                     },
                     {
-                        "step": "Application Server",
-                        "substeps": ["Process request", "Format response"]
-                    },
-                    {
-                        "step": "Cache",
+                        "step": "Application Server -> Cache: check cache",
                         "substeps": ["Check cache", "Update cache"]
                     },
                     {
-                        "step": "Database",
+                        "step": "Application Server -> Database: query data",
                         "substeps": ["Query data", "Return results"]
                     }
                 ]

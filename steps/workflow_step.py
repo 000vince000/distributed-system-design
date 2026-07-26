@@ -13,19 +13,15 @@ class WorkflowStep(BaseStep):
         """Design workflows for each API."""
         self.nav_helper.display_step_header(3)
         
-        # Create a list of all APIs with their requirements
+        # Create a list of all APIs with their requirements.
+        # Internal/downstream APIs are intentionally excluded here — they're
+        # only ever discovered and fully specified inline, as an attachment
+        # to another workflow's step (see api_step.py), so by the time one
+        # exists it's already complete and isn't itself a candidate for a
+        # top-level workflow.
         api_choices = []
         seen_apis = set()  # Track unique APIs
-        
-        # Collect APIs from both internal and external
-        if design_data["apis"]["internal"]:
-            for api in design_data["apis"]["internal"]:
-                if api["endpoint"] not in seen_apis:
-                    seen_apis.add(api["endpoint"])
-                    # Format request/response summary
-                    req_summary = "{}" if not api["request"] else " ".join(api["request"])
-                    resp_summary = "{}" if not api["response"] else " ".join(api["response"])
-                    api_choices.append((f"Internal: {api['endpoint']} {req_summary}->{resp_summary}", api, api["requirement"], "internal"))
+
         if design_data["apis"]["external"]:
             for api in design_data["apis"]["external"]:
                 if api["endpoint"] not in seen_apis:
@@ -92,61 +88,59 @@ class WorkflowStep(BaseStep):
             
             # Get high-level workflow steps
             workflow_steps = self.input_helper.get_multi_line_input(
-                "Enter high-level workflow steps (one per line, x to finish):"
+                "Enter high-level workflow steps (one per line, empty line to finish):"
             )
-            
-            # For each step, get detailed definition with substeps
-            step_definitions = []
+
+            # Commit the workflow to design_data immediately, and fill in its
+            # steps in place as they're completed, so a mid-workflow quit
+            # doesn't lose steps already finished.
+            workflow = {
+                "api": api["endpoint"],
+                "requirement": req,
+                "steps": [],
+                "type": api_type
+            }
+            design_data["workflows"].append(workflow)
+
             for i, step in enumerate(workflow_steps, 1):
                 self.console.print(f"\n[bold]Step {i}: {escape(step)}[/bold]")
                 substeps = self.input_helper.get_multi_line_input(
-                    "Enter substeps (one per line, x to finish):"
+                    "Enter substeps (one per line, empty line to finish):"
                 )
 
-                # Discover internal/downstream APIs this step needs, on the spot
+                # Discover the internal/downstream API this step needs, on the spot
                 step_internal_apis = []
-                while self.input_helper.get_choice(
+                if self.input_helper.get_choice(
                     f"Does '{step}' require a new internal/downstream API call?",
                     choices=["y", "n"]
                 ) == "y":
                     internal_endpoint = self.input_helper.get_multi_line_input(
                         "Enter internal API endpoint:"
                     )
-                    if not internal_endpoint:
-                        break
+                    if internal_endpoint:
+                        internal_request = self.input_helper.get_multi_line_input(
+                            "Enter request definition (one per line, empty line to finish):"
+                        )
+                        internal_response = self.input_helper.get_multi_line_input(
+                            "Enter response definition (one per line, empty line to finish):"
+                        )
 
-                    internal_request = self.input_helper.get_multi_line_input(
-                        "Enter request definition (one per line, x to finish):"
-                    )
-                    internal_response = self.input_helper.get_multi_line_input(
-                        "Enter response definition (one per line, x to finish):"
-                    )
+                        internal_api = {
+                            "endpoint": internal_endpoint[0],
+                            "request": internal_request,
+                            "response": internal_response,
+                            "requirement": req,
+                            "workflow_api": api["endpoint"]
+                        }
+                        design_data["apis"]["internal"].append(internal_api)
+                        step_internal_apis.append(internal_api["endpoint"])
 
-                    internal_api = {
-                        "endpoint": internal_endpoint[0],
-                        "request": internal_request,
-                        "response": internal_response,
-                        "requirement": req,
-                        "workflow_api": api["endpoint"]
-                    }
-                    design_data["apis"]["internal"].append(internal_api)
-                    step_internal_apis.append(internal_api["endpoint"])
-
-                step_definitions.append({
+                workflow["steps"].append({
                     "step": step,
                     "substeps": substeps,
                     "internal_apis": step_internal_apis
                 })
-            
-            workflow = {
-                "api": api["endpoint"],
-                "requirement": req,
-                "steps": step_definitions,
-                "type": api_type  # Add API type to workflow
-            }
-            
-            design_data["workflows"].append(workflow)
-            
+
             # Display summary of the current workflow
             self.console.print("\n[bold]Workflow Summary:[/bold]")
             self.console.print(f"API: {escape(workflow['api'])}")

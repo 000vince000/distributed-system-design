@@ -15,6 +15,7 @@ from steps.workflow_step import WorkflowStep
 from steps.architecture_step import ArchitectureStep
 from steps.optimization_step import OptimizationStep
 from steps.edge_cases_step import EdgeCasesStep
+from steps.helpers import QuitRequested
 from stubs.design_stubs import get_step1_stub, get_step2_stub, get_step3_stub, get_step4_stub, get_step5_stub, get_step6_stub
 
 class SystemDesignPractice:
@@ -237,7 +238,11 @@ class SystemDesignPractice:
                     data = json.load(f)
                     self.current_design = data['design']
                     self.start_time = data['start_time']
-                    return data['step'] + 1  # Return the next step
+                    # Older partial files predate the 'completed' field —
+                    # treat those as completed (old behavior: advance a step).
+                    if data.get('completed', True):
+                        return data['step'] + 1  # That step is done, move on
+                    return data['step']  # That step was interrupted, redo it
         except Exception as e:
             self.console.print(f"[red]Error loading design file: {str(e)}[/red]")
             return 1
@@ -250,42 +255,57 @@ class SystemDesignPractice:
             is_stub: Whether we're loading a stub file (True) or partial file (False)
         """
         self.console.print(Panel.fit("System Design Practice Tool"))
-        
-        # Load the design file and get the starting step
-        start_step = self._load_design_file(filename, is_stub)
-        
-        # Select design question if not already set
-        if not self.current_design["question"]:
-            self.select_design_question(start_step)
-                    
-        # Display summary of previous steps
-        self.console.print(f"\n{'Starting' if is_stub else 'Resuming'} from Step {start_step}\n")
-        self.console.print("Previous Steps Summary:\n")
-        
-        # Display summaries of completed steps
-        for step in range(1, start_step):
-            self._display_stub_summary(step)
-        
-        # Execute remaining steps
-        for i, step in enumerate(self.steps[start_step - 1:], start_step):
-            self.current_design = step.execute(self.current_design)
-            self._save_partial_design(i)
-            
-            # Ask if user wants to continue
-            if i < len(self.steps):
-                continue_choice = self.prompt.ask(
-                    "\nContinue to next step?",
-                    choices=["y", "n"],
-                    default="y"
-                )
-                if continue_choice == "n":
-                    break
-        
-        # Generate final report
-        self.generate_report()
 
-    def _save_partial_design(self, step_number: int):
-        """Save partial design after completing a step."""
+        try:
+            # Load the design file and get the starting step
+            start_step = self._load_design_file(filename, is_stub)
+
+            # Select design question if not already set
+            if not self.current_design["question"]:
+                self.select_design_question(start_step)
+
+            # Display summary of previous steps
+            self.console.print(f"\n{'Starting' if is_stub else 'Resuming'} from Step {start_step}\n")
+            self.console.print("Previous Steps Summary:\n")
+
+            # Display summaries of completed steps
+            for step in range(1, start_step):
+                self._display_stub_summary(step)
+
+            # Execute remaining steps
+            for i, step in enumerate(self.steps[start_step - 1:], start_step):
+                try:
+                    self.current_design = step.execute(self.current_design)
+                except QuitRequested:
+                    # step.execute() mutates self.current_design in place, so
+                    # whatever was completed before the quit is still there —
+                    # save it before the exception propagates. Mark the step
+                    # itself as not completed, so resuming re-enters it
+                    # instead of skipping to the next step.
+                    self._save_partial_design(i, completed=False)
+                    raise
+                self._save_partial_design(i, completed=True)
+
+                # Ask if user wants to continue
+                if i < len(self.steps):
+                    continue_choice = self.prompt.ask(
+                        "\nContinue to next step? (or 'q' to quit)",
+                        choices=["y", "n", "q"],
+                        default="y"
+                    )
+                    if continue_choice == "q":
+                        raise QuitRequested()
+                    if continue_choice == "n":
+                        break
+
+            # Generate final report
+            self.generate_report()
+            self._cleanup_partial_files(self.current_design["question"])
+        except QuitRequested:
+            self.console.print("\n[yellow]Exiting gracefully. Your progress has been saved.[/yellow]")
+
+    def _save_partial_design(self, step_number: int, completed: bool = True):
+        """Save partial design after completing (or being interrupted during) a step."""
         if not hasattr(self, 'start_time') or self.start_time is None:
             return  # Don't save if using stubs
             
@@ -312,6 +332,7 @@ class SystemDesignPractice:
         with open(filename, 'w') as f:
             json.dump({
                 'step': step_number,
+                'completed': completed,
                 'design': self.current_design,
                 'start_time': self.start_time
             }, f, indent=2)
@@ -333,29 +354,25 @@ class SystemDesignPractice:
             self.console.print(f"[yellow]Warning: Could not clean up partial files: {str(e)}[/yellow]")
 
     def select_design_question(self, start_step: int = 1):
-        """Select a design question to work on."""
+        """Select a design question to work on. Does not execute steps —
+        callers (e.g. start()) are responsible for running the step loop."""
         if not self.current_design["question"]:
             self.console.print("\nAvailable Design Questions:")
             for key, value in self.design_questions.items():
                 self.console.print(f"{key}. {value}")
-            
-            choice = Prompt.ask("Select a design question", choices=list(self.design_questions.keys()))
+
+            choice = Prompt.ask(
+                "Select a design question (or 'q' to quit)",
+                choices=list(self.design_questions.keys()) + ["q"]
+            )
+            if choice == "q":
+                raise QuitRequested()
             self.current_design["question"] = self._get_question_details(choice)
             self.console.print("\n[bold]Selected Question:[/bold]")
             self.console.print(self.current_design["question"])
-            
+
             # Initialize start time when starting a new design
             self.start_time = time.time()
-        
-        # Execute steps starting from the specified step
-        for i, step in enumerate(self.steps[start_step-1:], start=start_step):
-            self.current_design = step.execute(self.current_design)
-            # Save partial design after each step
-            self._save_partial_design(i)
-        
-        # Clean up partial files after generating final report
-        self._cleanup_partial_files(self.current_design["question"])
-        self.generate_report()
 
     def generate_mermaid_diagram(self):
         """Generate a mermaid diagram from components and workflows."""

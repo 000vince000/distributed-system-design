@@ -38,14 +38,14 @@ class OptimizationStep(BaseStep):
         self.console.print(f"[dim]You selected: {subcat}[/dim]")
         # Get optimization details
         details = self.input_helper.get_multi_line_input(
-            "Enter optimization details (one per line, x to finish):"
+            "Enter optimization details (one per line, empty line to finish):"
         )
         # Combine multiple lines into a single explanation
         explanation = " ".join(details)
         
         # Get trade-offs
         tradeoffs = self.input_helper.get_multi_line_input(
-            "Enter trade-offs for this subcategory (one per line, x to finish):"
+            "Enter trade-offs for this subcategory (one per line, empty line to finish):"
         )
         tradeoff = " ".join(tradeoffs)
         
@@ -61,7 +61,7 @@ class OptimizationStep(BaseStep):
         """Process free text optimization when no category is found."""
         self.console.print("[dim]Suggestions: Scalability, Consistency, Efficiency, User Experience, etc.[/dim]")
         req_optimizations = self.input_helper.get_multi_line_input(
-            "Enter optimizations (one per line, x to finish):"
+            "Enter optimizations (one per line, empty line to finish):"
         )
         return [{
             "nfr": nfr,
@@ -169,13 +169,13 @@ class OptimizationStep(BaseStep):
                     
                     # Get optimization details
                     details = self.input_helper.get_multi_line_input(
-                        "Enter optimization details (one per line, x to finish):"
+                        "Enter optimization details (one per line, empty line to finish):"
                     )
                     explanation = " ".join(details)
                     
                     # Get trade-offs
                     tradeoffs = self.input_helper.get_multi_line_input(
-                        "Enter trade-offs for this subcategory (one per line, x to finish):"
+                        "Enter trade-offs for this subcategory (one per line, empty line to finish):"
                     )
                     tradeoff = " ".join(tradeoffs)
                     
@@ -194,7 +194,7 @@ class OptimizationStep(BaseStep):
             else:
                 # Handle free text optimization
                 req_optimizations = self.input_helper.get_multi_line_input(
-                    "Enter optimizations (one per line, x to finish):"
+                    "Enter optimizations (one per line, empty line to finish):"
                 )
                 nfr_optimizations[nfr] = {
                     "nfr": nfr,

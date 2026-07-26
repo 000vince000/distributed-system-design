@@ -1,3 +1,4 @@
+from rich.markup import escape
 from .base_step import BaseStep
 from .diagram_generator import DiagramGenerator
 from .relationship_manager import RelationshipManager
@@ -19,16 +20,23 @@ class ArchitectureStep(BaseStep):
             self.console.print("[green]Architecture is already defined. Moving to next step.[/green]")
             return design_data
         
-        # Extract components from workflows
+        # Extract components from workflows, tracking which workflow/step each came from
         components = set()
+        component_sources = {}  # comp -> list of (workflow_api, step_text)
         for workflow in design_data.get("workflows", []):
             for step in workflow["steps"]:
-                components.add(step["step"].strip())
-        
+                parsed = self.relationship_manager.parse_step(step["step"])
+                if not parsed:
+                    self.console.print(f"[yellow]Warning: could not parse step '{step['step']}' as 'A -> B: action' — skipping.[/yellow]")
+                    continue
+                for comp in set((parsed[0], parsed[1])):
+                    components.add(comp)
+                    component_sources.setdefault(comp, []).append((workflow["api"], step["step"]))
+
         if not components:
             self.console.print("[yellow]No components found in workflows. Please define workflows first.[/yellow]")
             return design_data
-            
+
         # Get component types
         self.console.print("\n[bold]Specify component types:[/bold]")
         component_types = {}
@@ -40,9 +48,30 @@ class ArchitectureStep(BaseStep):
             "Cache",
             "Other"
         ]
-        
+
+        # Auto-detect obvious types from naming conventions, checked in order
+        # (most specific first) so e.g. a name matching both "cache" and
+        # "service" resolves to Cache rather than Service.
+        auto_type_rules = [
+            (["db", "database", "postgres", "dynamo"], "Database"),
+            (["cache"], "Cache"),
+            (["service"], "Service"),
+        ]
+
         for comp in sorted(components):
-            self.console.print(f"\nSelect type for {comp}:")
+            comp_lower = comp.lower()
+            auto_type = next(
+                (type_ for keywords, type_ in auto_type_rules if any(kw in comp_lower for kw in keywords)),
+                None
+            )
+            if auto_type:
+                component_types[comp] = auto_type
+                self.console.print(f"\n[green]Auto-detected type for {escape(comp)}: {auto_type}[/green]")
+                continue
+
+            self.console.print(f"\nSelect type for {escape(comp)}:")
+            for workflow_api, step_text in component_sources.get(comp, []):
+                self.console.print(f"  [dim]{escape(workflow_api)}: {escape(step_text)}[/dim]")
             self.display_helper.display_list(type_options, enumerate_items=True)
             
             type_choice = self.input_helper.get_choice(
@@ -51,8 +80,8 @@ class ArchitectureStep(BaseStep):
             )
             component_types[comp] = type_options[int(type_choice) - 1]
         
-        # Infer relationships from workflows
-        described_relationships = self.relationship_manager.infer_relationships_from_workflows(design_data)
+        # Extract relationships from workflows
+        described_relationships = self.relationship_manager.extract_relationships_from_workflows(design_data)
         
         # Fix protocols for database relationships
         for rel in described_relationships:
@@ -123,7 +152,7 @@ class ArchitectureStep(BaseStep):
                     # Get relationship details
                     self.console.print(f"\n[bold]Relationship: {source} -> {target}[/bold]")
                     description_lines = self.input_helper.get_multi_line_input(
-                        "Enter relationship description (x to finish):"
+                        "Enter relationship description (empty line to finish):"
                     )
                     description = description_lines[0] if description_lines else ""
                     
@@ -202,7 +231,7 @@ class ArchitectureStep(BaseStep):
                 self.console.print("Enter 'x' when done with this component")
                 
                 component_schema = self.input_helper.get_multi_line_input(
-                    f"Enter schema for {comp} (x to finish):"
+                    f"Enter schema for {comp} (empty line to finish):"
                 )
                 if component_schema:
                     schema.extend([self.schema_manager.format_schema_entry(comp, table) for table in component_schema])

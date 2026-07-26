@@ -2,32 +2,48 @@ from rich.console import Console
 from rich.markup import escape
 from rich.prompt import Prompt
 
+
+class QuitRequested(Exception):
+    """Raised when the user chooses to gracefully exit via the quit option."""
+    pass
+
+
 class InputHelper:
     def __init__(self, console: Console, prompt: Prompt):
         self.console = console
         self.prompt = prompt
         self.SKIP_CHOICE = "x"  # Standard skip/finish choice
-    
-    def get_multi_line_input(self, prompt: str, terminator: str = "x") -> list:
-        """Get multi-line input from user until terminator is entered.
-        
+        self.QUIT_CHOICE = "q"  # Standard graceful-exit choice
+        self.UNDO_CHOICE = "u"  # Undo last entered line, in get_multi_line_input
+
+    def get_multi_line_input(self, prompt: str) -> list:
+        """Get multi-line input from user until a blank line is entered.
+
         Args:
             prompt: The prompt to display
-            terminator: The terminator string (defaults to "x")
         """
-        self.console.print(f"\n{prompt}")
+        self.console.print(f"\n{prompt} (or '{self.QUIT_CHOICE}' to quit, '{self.UNDO_CHOICE}' to undo last line)")
         lines = []
         while True:
             line = input()
-            if line.strip() == terminator:
+            stripped = line.strip()
+            if stripped == self.QUIT_CHOICE:
+                raise QuitRequested()
+            if stripped == self.UNDO_CHOICE:
+                if lines:
+                    removed = lines.pop()
+                    self.console.print(f"[yellow]Removed: {removed}[/yellow]")
+                else:
+                    self.console.print("[yellow]Nothing to undo.[/yellow]")
+                continue
+            if not stripped:  # Blank line finishes input
                 break
-            if line.strip():  # Only add non-empty lines
-                lines.append(line.strip())
+            lines.append(stripped)
         return lines
-    
+
     def get_choice(self, prompt: str, choices: list, default: str = None, skip_prompt: bool = False) -> str:
         """Get a choice from a list of options.
-        
+
         Args:
             prompt: The prompt to display
             choices: List of valid choices
@@ -37,14 +53,26 @@ class InputHelper:
         # Add skip choice if not present and skip_prompt is True
         if skip_prompt and self.SKIP_CHOICE not in choices:
             choices = choices + [self.SKIP_CHOICE]
-            
+
+        # Add quit choice if not already present
+        if self.QUIT_CHOICE not in choices:
+            choices = choices + [self.QUIT_CHOICE]
+
+        hints = []
+        if skip_prompt:
+            hints.append(f"'{self.SKIP_CHOICE}' to skip")
+        hints.append(f"'{self.QUIT_CHOICE}' to quit")
+
         prompt_kwargs = {
-            "prompt": prompt + (" (or 'x' to skip)" if skip_prompt else ""),
+            "prompt": prompt + f" (or {', '.join(hints)})",
             "choices": choices
         }
         if default and len(choices) == 1:
             prompt_kwargs["default"] = default
-        return self.prompt.ask(**prompt_kwargs)
+        choice = self.prompt.ask(**prompt_kwargs)
+        if choice == self.QUIT_CHOICE:
+            raise QuitRequested()
+        return choice
 
 class DisplayHelper:
     def __init__(self, console: Console):
@@ -93,8 +121,11 @@ class StepNavigationHelper:
     
     def ask_continue(self) -> bool:
         """Ask if user wants to continue to next step."""
-        return self.prompt.ask(
-            "\nContinue to next step?",
-            choices=["y", "n"],
+        choice = self.prompt.ask(
+            "\nContinue to next step? (or 'q' to quit)",
+            choices=["y", "n", "q"],
             default="y"
-        ) == "y" 
+        )
+        if choice == "q":
+            raise QuitRequested()
+        return choice == "y"

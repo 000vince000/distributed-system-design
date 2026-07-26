@@ -40,12 +40,12 @@ class ApiStep(BaseStep):
 
             # Get request definition
             request_def = self.input_helper.get_multi_line_input(
-                "Enter request definition (one per line, x to finish):"
+                "Enter request definition (one per line, empty line to finish):"
             )
 
             # Get response definition
             response_def = self.input_helper.get_multi_line_input(
-                "Enter response definition (one per line, x to finish):"
+                "Enter response definition (one per line, empty line to finish):"
             )
 
             # Store the complete API definition with the selected requirement

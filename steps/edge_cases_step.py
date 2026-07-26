@@ -43,7 +43,7 @@ class EdgeCasesStep(BaseStep):
                 )
                 if add_prevention == "y":
                     prevention = self.input_helper.get_multi_line_input(
-                        "Enter prevention strategies (one per line, x to finish):"
+                        "Enter prevention strategies (one per line, empty line to finish):"
                     )
                     
                 add_mitigation = self.input_helper.get_choice(
@@ -53,7 +53,7 @@ class EdgeCasesStep(BaseStep):
                 )
                 if add_mitigation == "y":
                     mitigation = self.input_helper.get_multi_line_input(
-                        "Enter mitigation strategies (one per line, x to finish):"
+                        "Enter mitigation strategies (one per line, empty line to finish):"
                     )
                     
                 selected_failures.append({
@@ -82,7 +82,7 @@ class EdgeCasesStep(BaseStep):
         
         # Get general edge cases
         edge_cases = self.input_helper.get_multi_line_input(
-            "Enter general edge cases (one per line, x to finish):"
+            "Enter general edge cases (one per line, empty line to finish):"
         )
         edge_cases_with_strategies = []
         for edge_case in edge_cases:
@@ -97,7 +97,7 @@ class EdgeCasesStep(BaseStep):
             )
             if add_prevention == "y":
                 prevention = self.input_helper.get_multi_line_input(
-                    "Enter prevention strategies (one per line, x to finish):"
+                    "Enter prevention strategies (one per line, empty line to finish):"
                 )
                 
             add_mitigation = self.input_helper.get_choice(
@@ -107,7 +107,7 @@ class EdgeCasesStep(BaseStep):
             )
             if add_mitigation == "y":
                 mitigation = self.input_helper.get_multi_line_input(
-                    "Enter mitigation strategies (one per line, x to finish):"
+                    "Enter mitigation strategies (one per line, empty line to finish):"
                 )
                 
             edge_cases_with_strategies.append({
