@@ -11,6 +11,11 @@ class RequirementsStep(BaseStep):
         )
 
         self.console.print("\n[bold]Non-functional Requirements:[/bold]")
+        self.console.print(
+            "[muted]Tip: scope each to the flow(s) it governs rather than the whole system, "
+            "e.g. 'strong consistency for order creation/transfers; eventual consistency for "
+            "ticker lookup' — different flows often need different guarantees.[/muted]"
+        )
         design_data["requirements"]["nonfunctional"] = self.input_helper.get_multi_line_input(
             "Enter non-functional requirements (one per line, empty line to finish):"
         )
