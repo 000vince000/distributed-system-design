@@ -35,12 +35,6 @@ def get_step2_stub():
                 "avg_qps": "2K",
                 "peak_multiplier": "3",
                 "peak_qps": "6K"
-            },
-            "throughput": {
-                "avg_read_payload": "2KB",
-                "avg_write_payload": "1KB",
-                "bandwidth": "12MB/sec peak",
-                "storage_growth": "50GB/day"
             }
         }
     }

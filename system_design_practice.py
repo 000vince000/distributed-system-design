@@ -144,12 +144,8 @@ class SystemDesignPractice:
         elif step_number == 2:
             if "capacity" in self.current_design:
                 traffic = self.current_design["capacity"].get("traffic", {})
-                throughput = self.current_design["capacity"].get("throughput", {})
                 self.console.print("\n[bold]Traffic:[/bold]")
                 for key, value in traffic.items():
-                    self.console.print(f"- {key}: {value}")
-                self.console.print("\n[bold]Throughput:[/bold]")
-                for key, value in throughput.items():
                     self.console.print(f"- {key}: {value}")
 
         elif step_number == 3:
@@ -557,7 +553,6 @@ class SystemDesignPractice:
 
             # Format capacity estimation section
             traffic = self.current_design.get("capacity", {}).get("traffic", {})
-            throughput = self.current_design.get("capacity", {}).get("throughput", {})
             traffic_labels = {
                 "users": "Active users",
                 "read_write_ratio": "Read:Write ratio",
@@ -565,17 +560,8 @@ class SystemDesignPractice:
                 "peak_multiplier": "Peak multiplier",
                 "peak_qps": "Peak QPS"
             }
-            throughput_labels = {
-                "avg_read_payload": "Avg read payload size",
-                "avg_write_payload": "Avg write payload size",
-                "bandwidth": "Bandwidth",
-                "storage_growth": "Storage growth"
-            }
             traffic_str = "\n".join(
                 f"- {traffic_labels.get(k, k)}: {v}" for k, v in traffic.items() if v
-            )
-            throughput_str = "\n".join(
-                f"- {throughput_labels.get(k, k)}: {v}" for k, v in throughput.items() if v
             )
 
             report = f"""# System Design Practice Report
@@ -599,9 +585,6 @@ class SystemDesignPractice:
 ## Capacity Estimation
 ### Traffic
 {traffic_str}
-
-### Throughput
-{throughput_str}
 
 ## APIs
 ### Internal

@@ -3,12 +3,12 @@ from .helpers import parse_human_number, format_human_number
 
 class CapacityEstimationStep(BaseStep):
     def execute(self, design_data):
-        """Gather back-of-envelope traffic and throughput estimates."""
+        """Gather back-of-envelope traffic estimates."""
         self.navigation_helper.display_step_header(2)
 
-        design_data["capacity"] = {"traffic": {}, "throughput": {}}
+        design_data["capacity"] = {"traffic": {}}
 
-        self.console.print("\n[bold]a) Traffic:[/bold]")
+        self.console.print("\n[bold]Traffic:[/bold]")
         users = " ".join(self.input_helper.get_multi_line_input(
             "Active users (e.g. '10M DAU')"
         ))
@@ -40,27 +40,6 @@ class CapacityEstimationStep(BaseStep):
             "avg_qps": avg_qps,
             "peak_multiplier": peak_multiplier,
             "peak_qps": peak_qps
-        }
-
-        self.console.print("\n[bold]b) Throughput:[/bold]")
-        avg_read_payload = " ".join(self.input_helper.get_multi_line_input(
-            "Avg read payload/response size (e.g. '2KB')"
-        ))
-        avg_write_payload = " ".join(self.input_helper.get_multi_line_input(
-            "Avg write payload/request size (e.g. '1KB')"
-        ))
-        bandwidth = " ".join(self.input_helper.get_multi_line_input(
-            "Estimated bandwidth (e.g. '50MB/sec peak')"
-        ))
-        storage_growth = " ".join(self.input_helper.get_multi_line_input(
-            "Storage growth (e.g. '500GB/day', or leave blank to skip)"
-        ))
-
-        design_data["capacity"]["throughput"] = {
-            "avg_read_payload": avg_read_payload,
-            "avg_write_payload": avg_write_payload,
-            "bandwidth": bandwidth,
-            "storage_growth": storage_growth
         }
 
         return design_data
