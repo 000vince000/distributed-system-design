@@ -324,19 +324,24 @@ class SystemDesignPractice:
         except QuitRequested:
             self.console.print("\n[warning]Exiting gracefully. Your progress has been saved.[/warning]")
 
+    def _slugify_question(self, question: str, max_len: int = 30) -> str:
+        """Turn a (possibly multi-line) question into a filesystem-safe slug.
+        Only the first line is used, so multi-paragraph question-bank entries
+        don't bleed their body text into filenames."""
+        first_line = question.split('\n')[0].lower()
+        slug = ''.join(c if c.isalnum() or c.isspace() else '' for c in first_line)
+        slug = '_'.join(slug.split())  # collapse/strip whitespace runs
+        return slug[:max_len]
+
     def _save_partial_design(self, step_number: int, completed: bool = True):
         """Save partial design after completing (or being interrupted during) a step."""
         if not hasattr(self, 'start_time') or self.start_time is None:
             return  # Don't save if using stubs
-            
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Get question filename from the first line of the question
-        question_first_line = self.current_design['question'].split('\n')[0].lower()
-        question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_first_line)
-        question_name = question_name.replace(' ', '_')
-        question_name = question_name[:30]  # Shorter max length
-        
+
+        question_name = self._slugify_question(self.current_design['question'])
+
         # Delete any existing partial files for this question
         try:
             for filename in os.listdir("design_reports"):
@@ -359,16 +364,13 @@ class SystemDesignPractice:
         
         self.console.print(f"\n[warning]Partial design saved to: {filename}[/warning]")
 
-    def _cleanup_partial_files(self, question_name: str):
+    def _cleanup_partial_files(self, question: str):
         """Clean up partial files for the current design."""
         try:
-            question_name = question_name.lower()
-            question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
-            question_name = question_name.replace(' ', '_')
-            question_name = question_name[:50]
-            
+            question_name = self._slugify_question(question)
+
             for filename in os.listdir("design_reports"):
-                if filename.startswith(f"partial_design_{question_name}_") and filename.endswith(".json"):
+                if filename.startswith(f"partial_{question_name}_") and filename.endswith(".json"):
                     os.remove(os.path.join("design_reports", filename))
         except Exception as e:
             self.console.print(f"[warning]Warning: Could not clean up partial files: {str(e)}[/warning]")
@@ -465,13 +467,8 @@ class SystemDesignPractice:
             os.makedirs("design_reports", exist_ok=True)
             
             # Create a more descriptive filename from the question
-            question_name = self.current_design['question'].lower()
-            # Remove special characters and replace spaces with underscores
-            question_name = ''.join(c if c.isalnum() or c.isspace() else '' for c in question_name)
-            question_name = question_name.replace(' ', '_')
-            # Truncate if too long
-            question_name = question_name[:50]
-            
+            question_name = self._slugify_question(self.current_design['question'], max_len=50)
+
             filename = f"design_reports/design_report_{question_name}_{timestamp}.md"
 
             # Generate mermaid diagram
