@@ -8,8 +8,7 @@ OPTIMIZATION_OPTIONS = {
             "3": "Sharding",
             "4": "Async processing",
             "5": "Read replica",
-            "6": "Loose coupling",
-            "7": "Other"
+            "6": "Other"
         }
     },
     "2": {
@@ -22,14 +21,15 @@ OPTIMIZATION_OPTIONS = {
             "5": "FIFO queue",
             "6": "Token leasing",
             "7": "Idempotent operations",
-            "8": "Other"
+            "8": "Saga pattern / compensating transactions",
+            "9": "Other"
         }
     },
     "3": {
         "name": "Efficiency",
         "options": {
             "1": "Transport data compression",
-            "2": "Pre-upload transport data",
+            "2": "Prefetching",
             "3": "CDN",
             "4": "Use UDP instead of TCP",
             "5": "Load balancing",
@@ -37,7 +37,7 @@ OPTIMIZATION_OPTIONS = {
             "7": "Worker parallelism",
             "8": "DB indexing",
             "9": "NoSQL DB",
-            "10": "DB read replica",
+            "10": "Read replica",
             "11": "DB connection pooler",
             "12": "DB materialized view",
             "13": "Other"
@@ -47,10 +47,9 @@ OPTIMIZATION_OPTIONS = {
         "name": "User Experience",
         "options": {
             "1": "Client browser caching",
-            "2": "Cookies",
-            "3": "Lazy load",
-            "4": "Realtime notification",
-            "5": "Other"
+            "2": "Lazy load",
+            "3": "Realtime notification",
+            "4": "Other"
         }
     },
     "5": {
@@ -67,7 +66,8 @@ OPTIMIZATION_OPTIONS = {
             "9": "Use bulkheads for resource isolation",
             "10": "Load shedding",
             "11": "Request coalescing",
-            "12": "Other"
+            "12": "Graceful degradation / fallback response",
+            "13": "Other"
         }
     }
 }
@@ -78,8 +78,6 @@ NFR_TO_CATEGORY = {
     "scalability": "1",
     "high availability": "1",
     "availability": "1",
-    "fault tolerance": "1",
-    "resilience": "1",
     "reliability": "5",
     "disaster recovery": "5",
     "fault tolerance": "5",

@@ -1,31 +1,28 @@
 # Small scale failure scenarios
 SMALL_SCALE_FAILURES = {
-    "1": "Memory leak",
-    "2": "Cache misses",
-    "3": "Cache stampede / thundering herd",
-    "4": "Message loss",
-    "5": "Duplicate message delivery",
-    "6": "Race condition",
-    "7": "Deadlock",
-    "8": "Cascading failure",
-    "9": "Retry storm",
-    "10": "Connection pool exhaustion",
-    "11": "Hot key / hot partition",
-    "12": "Other"
+    "1": "Cache misses",
+    "2": "Cache stampede / thundering herd",
+    "3": "Message loss",
+    "4": "Duplicate message delivery",
+    "5": "Race condition",
+    "6": "Deadlock",
+    "7": "Cascading failure",
+    "8": "Retry storm",
+    "9": "Connection pool exhaustion",
+    "10": "Hot key / hot partition",
+    "11": "Other"
 }
 
 # Large scale failure scenarios
 LARGE_SCALE_FAILURES = {
     "1": "3P API down",
     "2": "Service overwhelmed",
-    "3": "DDoS",
-    "4": "Node down",
-    "5": "Cluster down",
-    "6": "Region/AZ outage",
-    "7": "Network partition (split-brain)",
-    "8": "Database failover",
-    "9": "Deployment failure",
-    "10": "Certificate/credential expiry",
-    "11": "Load balancer failure",
-    "12": "Other"
-} 
+    "3": "Node down",
+    "4": "Cluster down",
+    "5": "Region/AZ outage",
+    "6": "Network partition (split-brain)",
+    "7": "Database failover",
+    "8": "Deployment failure",
+    "9": "Load balancer failure",
+    "10": "Other"
+}
