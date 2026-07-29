@@ -4,8 +4,13 @@ class SchemaManager:
 
     def get_storage_components(self, component_types):
         """Get storage components (Database and Cache) from component types."""
-        return {comp: type_ for comp, type_ in component_types.items() 
+        return {comp: type_ for comp, type_ in component_types.items()
                 if type_ in ["Database", "Cache"]}
+
+    def get_service_components(self, component_types):
+        """Get Service components — candidates for optionally owning their own schema."""
+        return {comp: type_ for comp, type_ in component_types.items()
+                if type_ == "Service"}
 
     def format_schema_entry(self, storage, table):
         """Format a schema entry."""

@@ -242,7 +242,22 @@ class ArchitectureStep(BaseStep):
                 )
                 if component_schema:
                     schema.extend([self.schema_manager.format_schema_entry(comp, table) for table in component_schema])
-        
+
+        # Optional: services that own their own tables (not shared with an
+        # existing Database/Cache component). Most services are stateless
+        # here, so this is skippable per-service with a blank line.
+        service_components = self.schema_manager.get_service_components(component_types)
+        if service_components:
+            self.console.print("\n[bold]Optional: tables owned directly by a service[/bold]")
+            self.console.print("[muted]Press Enter to skip any service that doesn't own its own table.[/muted]")
+            for comp in service_components:
+                self.console.print(f"\n[bold]Tables owned by {comp}:[/bold] (TableName: field1:type, field2:type, ... — empty line to skip)")
+                component_schema = self.input_helper.get_multi_line_input(
+                    f"Enter schema for {comp} (empty line to skip):"
+                )
+                if component_schema:
+                    schema.extend([self.schema_manager.format_schema_entry(comp, table) for table in component_schema])
+
         # Store architecture design
         design_data["architecture"] = {
             "component_types": component_types,
