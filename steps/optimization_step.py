@@ -1,5 +1,5 @@
 from .base_step import BaseStep
-from config.optimization_config import OPTIMIZATION_OPTIONS, NFR_TO_CATEGORY
+from config.optimization_config import OPTIMIZATION_OPTIONS, NFR_TO_CATEGORY, TACTIC_TLDR
 
 class OptimizationStep(BaseStep):
     def __init__(self, console=None):
@@ -7,6 +7,15 @@ class OptimizationStep(BaseStep):
         # Use configuration from config file
         self.optimization_options = OPTIMIZATION_OPTIONS
         self.nfr_to_cat = NFR_TO_CATEGORY
+        self.tactic_tldr = TACTIC_TLDR
+
+    def _labels_with_tldr(self, options):
+        """Append a one-line explanation to less-common tactic names."""
+        labels = []
+        for opt in options:
+            tldr = self.tactic_tldr.get(opt)
+            labels.append(f"{opt} — {tldr}" if tldr else opt)
+        return labels
 
     def _get_category_for_nfr(self, nfr):
         """Map NFR to optimization category."""
@@ -86,7 +95,7 @@ class OptimizationStep(BaseStep):
             
             while remaining_options:
                 self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
-                self.display_helper.display_list([opt[1] for opt in remaining_options], enumerate_items=True)
+                self.display_helper.display_list(self._labels_with_tldr([opt[1] for opt in remaining_options]), enumerate_items=True)
                 self.console.print("x. Done with this NFR")
                 
                 subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]
@@ -155,7 +164,7 @@ class OptimizationStep(BaseStep):
                 
                 while remaining_options:
                     self.console.print(f"[bold]Select subcategory for {nfr}:[/bold]")
-                    self.display_helper.display_list([opt[1] for opt in remaining_options], enumerate_items=True)
+                    self.display_helper.display_list(self._labels_with_tldr([opt[1] for opt in remaining_options]), enumerate_items=True)
                     self.console.print("x. Done with this NFR")
                     
                     subcat_choices = [str(i) for i in range(1, len(remaining_options) + 1)] + [self.input_helper.SKIP_CHOICE]

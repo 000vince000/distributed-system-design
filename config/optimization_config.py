@@ -72,6 +72,22 @@ OPTIMIZATION_OPTIONS = {
     }
 }
 
+# One-line explanations for less commonly known tactics. Shown inline next
+# to the option when selecting a subcategory; anything not listed here is
+# assumed to be self-explanatory from its name.
+TACTIC_TLDR = {
+    "Quorum": "Majority of replicas must agree, so the system tolerates some nodes being down.",
+    "Token leasing": "A lock with a TTL — auto-releases if the holder crashes, avoiding permanent deadlock.",
+    "Saga pattern / compensating transactions": "Multi-step transaction with an undo action per step, run on failure instead of one atomic commit.",
+    "Use different hash keys for cache and db": "Different hash schemes per layer, so one hot key doesn't hot-partition both at once.",
+    "Use bulkheads for resource isolation": "Separate resource pools per dependency, so one failing dependency can't starve the rest.",
+    "Request coalescing": "Concurrent requests for the same uncached key share one origin fetch instead of all hitting it.",
+    "Load shedding": "Drop excess requests past capacity so what you do serve stays healthy.",
+    "Graceful degradation / fallback response": "Serve a reduced/stale response instead of failing outright when a dependency is down.",
+    "DB materialized view": "Precomputed query result, refreshed periodically, so expensive aggregations aren't recomputed per read.",
+    "DB connection pooler": "Shared pool of DB connections reused across processes, avoiding per-process connection overhead.",
+}
+
 # Mapping of non-functional requirements to categories
 NFR_TO_CATEGORY = {
     # Scalability/Availability
