@@ -9,15 +9,15 @@ class CapacityEstimationStep(BaseStep):
         design_data["capacity"] = {"traffic": {}, "throughput": {}}
 
         self.console.print("\n[bold]a) Traffic:[/bold]")
-        users = self.input_helper.get_line_input(
+        users = " ".join(self.input_helper.get_multi_line_input(
             "Active users (e.g. '10M DAU')"
-        )
-        read_write_ratio = self.input_helper.get_line_input(
+        ))
+        read_write_ratio = " ".join(self.input_helper.get_multi_line_input(
             "Read:Write ratio (e.g. '100:1')"
-        )
-        avg_qps = self.input_helper.get_line_input(
+        ))
+        avg_qps = " ".join(self.input_helper.get_multi_line_input(
             "Average requests/sec (number, e.g. 500 or 2K)"
-        )
+        ))
         peak_multiplier = self.input_helper.get_line_input(
             "Peak multiplier over average (e.g. 3)", default="2"
         )
@@ -43,18 +43,18 @@ class CapacityEstimationStep(BaseStep):
         }
 
         self.console.print("\n[bold]b) Throughput:[/bold]")
-        avg_read_payload = self.input_helper.get_line_input(
+        avg_read_payload = " ".join(self.input_helper.get_multi_line_input(
             "Avg read payload/response size (e.g. '2KB')"
-        )
-        avg_write_payload = self.input_helper.get_line_input(
+        ))
+        avg_write_payload = " ".join(self.input_helper.get_multi_line_input(
             "Avg write payload/request size (e.g. '1KB')"
-        )
-        bandwidth = self.input_helper.get_line_input(
+        ))
+        bandwidth = " ".join(self.input_helper.get_multi_line_input(
             "Estimated bandwidth (e.g. '50MB/sec peak')"
-        )
-        storage_growth = self.input_helper.get_line_input(
+        ))
+        storage_growth = " ".join(self.input_helper.get_multi_line_input(
             "Storage growth (e.g. '500GB/day', or leave blank to skip)"
-        )
+        ))
 
         design_data["capacity"]["throughput"] = {
             "avg_read_payload": avg_read_payload,
