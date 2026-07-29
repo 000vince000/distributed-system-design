@@ -11,7 +11,7 @@ class WorkflowStep(BaseStep):
 
     def execute(self, design_data):
         """Design workflows for each API."""
-        self.nav_helper.display_step_header(3)
+        self.nav_helper.display_step_header(4)
         
         # Create a list of all APIs with their requirements.
         # Internal/downstream APIs are intentionally excluded here — they're

@@ -71,7 +71,7 @@ class EdgeCasesStep(BaseStep):
 
     def execute(self, design_data):
         """Identify edge cases and failure scenarios."""
-        self.navigation_helper.display_step_header(6)
+        self.navigation_helper.display_step_header(7)
         
         # Initialize edge cases structure if not exists
         if "edge_cases" not in design_data:

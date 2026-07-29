@@ -13,7 +13,7 @@ class ArchitectureStep(BaseStep):
 
     def execute(self, design_data):
         """Design system architecture and database schema."""
-        self.navigation_helper.display_step_header(4)
+        self.navigation_helper.display_step_header(5)
         
         # Check if architecture is already defined
         if "architecture" in design_data and design_data["architecture"]:

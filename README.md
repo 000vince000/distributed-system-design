@@ -6,19 +6,23 @@ To practice a structured approach to solving system design problems, as such:
   1. requirement gathering
      * functional
      * nonfunctional
-  2. api design
+     * out of scope: things considered but explicitly discarded, e.g. for lack of time
+  2. capacity estimation
+     * traffic: active users, read:write ratio, average/peak QPS
+     * throughput: payload sizes, bandwidth, storage growth
+  3. api design
      * internal
      * external
-  3. workflow design
+  4. workflow design
      * focus on happy path E2E flow
      * identify major components, ie services
-  4. architecture diagraming
+  5. architecture diagraming
      * wire components together
      * also identify minor components like database schema
      * talk about implement choices with reason and trade-offs against alternatives
      * database schema
      * most importantly, ensure API→workflows→diagram is functionally complete
-  5. optimization against nonfunctional requirements, e.g.:
+  6. optimization against nonfunctional requirements, e.g.:
      * consideration of CAP theorem
      * scalability
      * efficiency
@@ -26,7 +30,7 @@ To practice a structured approach to solving system design problems, as such:
        * single point of failures
      * user experience: responsiveness, feedback, lazyload, caching, etc
      * for each choice, talk about implement choices with reason and trade-offs against alternatives
-  6. edge cases & failure handling (adding depths)
+  7. edge cases & failure handling (adding depths)
      * edge cases
      * small scale failures
        * memory leak
@@ -70,7 +74,8 @@ python system_design_practice.py
 
 2. Follow the interactive prompts:
    - Select a design question from the available options
-   - Add functional and non-functional requirements
+   - Add functional and non-functional requirements, plus out-of-scope items
+   - Estimate traffic and throughput (capacity estimation)
    - Design internal and external APIs
    - Define workflows (using the format: `ComponentA -> ComponentB: action`)
    - Identify system components

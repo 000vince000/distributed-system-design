@@ -10,6 +10,7 @@ from datetime import datetime
 import argparse
 
 from steps.requirements_step import RequirementsStep
+from steps.capacity_estimation_step import CapacityEstimationStep
 from steps.api_step import ApiStep
 from steps.workflow_step import WorkflowStep
 from steps.architecture_step import ArchitectureStep
@@ -26,17 +27,19 @@ class SystemDesignPractice:
         self.design_questions = self._load_questions()
         self.current_design = {
             "question": "",
-            "requirements": {"functional": [], "nonfunctional": []},
+            "requirements": {"functional": [], "nonfunctional": [], "out_of_scope": []},
+            "capacity": {"traffic": {}, "throughput": {}},
             "apis": {"internal": [], "external": []},
             "workflows": [],
             "components": [],
             "optimizations": [],
             "edge_cases": {"small": [], "big": []}
         }
-        
+
         # Initialize steps
         self.steps = [
             RequirementsStep(self.console),
+            CapacityEstimationStep(self.console),
             ApiStep(self.console),
             WorkflowStep(self.console),
             ArchitectureStep(self.console),
@@ -117,15 +120,16 @@ class SystemDesignPractice:
         """Display a summary of the stub data for a given step."""
         step_names = {
             1: "Requirements",
-            2: "APIs",
-            3: "Workflows",
-            4: "Architecture",
-            5: "Optimizations",
-            6: "Edge Cases"
+            2: "Capacity Estimation",
+            3: "APIs",
+            4: "Workflows",
+            5: "Architecture",
+            6: "Optimizations",
+            7: "Edge Cases"
         }
-        
+
         self.console.print(f"\n[header]Step {step_number}: {step_names[step_number]} Summary[/header]")
-        
+
         if step_number == 1:
             self.console.print("\n[bold]Functional Requirements:[/bold]")
             for req in self.current_design["requirements"]["functional"]:
@@ -133,8 +137,22 @@ class SystemDesignPractice:
             self.console.print("\n[bold]Non-functional Requirements:[/bold]")
             for req in self.current_design["requirements"]["nonfunctional"]:
                 self.console.print(f"- {req}")
-        
+            self.console.print("\n[bold]Out of Scope:[/bold]")
+            for item in self.current_design["requirements"].get("out_of_scope", []):
+                self.console.print(f"- {item}")
+
         elif step_number == 2:
+            if "capacity" in self.current_design:
+                traffic = self.current_design["capacity"].get("traffic", {})
+                throughput = self.current_design["capacity"].get("throughput", {})
+                self.console.print("\n[bold]Traffic:[/bold]")
+                for key, value in traffic.items():
+                    self.console.print(f"- {key}: {value}")
+                self.console.print("\n[bold]Throughput:[/bold]")
+                for key, value in throughput.items():
+                    self.console.print(f"- {key}: {value}")
+
+        elif step_number == 3:
             self.console.print("\n[bold]Internal APIs:[/bold]")
             for api in self.current_design["apis"]["internal"]:
                 self.console.print(f"- {api['endpoint']}")
@@ -145,8 +163,8 @@ class SystemDesignPractice:
                 self.console.print(f"- {api['endpoint']}")
                 self.console.print(f"  Request: {', '.join(api['request'])}")
                 self.console.print(f"  Response: {', '.join(api['response'])}")
-        
-        elif step_number == 3:
+
+        elif step_number == 4:
             self.console.print("\n[bold]Workflows:[/bold]")
             for workflow in self.current_design["workflows"]:
                 self.console.print(f"\nAPI: {workflow['api']}")
@@ -156,8 +174,8 @@ class SystemDesignPractice:
                     self.console.print(f"  {step['step']}")
                     for substep in step["substeps"]:
                         self.console.print(f"    - {substep}")
-        
-        elif step_number == 4:
+
+        elif step_number == 5:
             if "architecture" in self.current_design:
                 self.console.print("\n[bold]Component Types:[/bold]")
                 for comp, type_ in self.current_design["architecture"]["component_types"].items():
@@ -182,7 +200,7 @@ class SystemDesignPractice:
                 self.console.print(mermaid_diagram)
                 self.console.print("```")
         
-        elif step_number == 5:
+        elif step_number == 6:
             if "optimizations" in self.current_design:
                 self.console.print("\n[bold]Optimizations:[/bold]")
                 for nfr_group in self.current_design["optimizations"]["items"]:
@@ -196,8 +214,8 @@ class SystemDesignPractice:
                             self.console.print(f"  - Trade-offs: {opt['tradeoffs']}")
                     # Add blank line between NFR groups
                     self.console.print("")
-        
-        elif step_number == 6:
+
+        elif step_number == 7:
             if "edge_cases" in self.current_design:
                 self.console.print("\n[bold]Small Edge Cases:[/bold]")
                 for case in self.current_design["edge_cases"]["small"]:
@@ -231,6 +249,8 @@ class SystemDesignPractice:
                     self.current_design = get_step4_stub()
                 elif step == 6:
                     self.current_design = get_step5_stub()
+                elif step == 7:
+                    self.current_design = get_step6_stub()
                 return step
             else:
                 # For partial files, load the data and get next step from file
@@ -538,6 +558,29 @@ class SystemDesignPractice:
                     ))
             edge_cases_str = "\n\n".join(edge_cases)
 
+            # Format capacity estimation section
+            traffic = self.current_design.get("capacity", {}).get("traffic", {})
+            throughput = self.current_design.get("capacity", {}).get("throughput", {})
+            traffic_labels = {
+                "users": "Active users",
+                "read_write_ratio": "Read:Write ratio",
+                "avg_qps": "Average QPS",
+                "peak_multiplier": "Peak multiplier",
+                "peak_qps": "Peak QPS"
+            }
+            throughput_labels = {
+                "avg_read_payload": "Avg read payload size",
+                "avg_write_payload": "Avg write payload size",
+                "bandwidth": "Bandwidth",
+                "storage_growth": "Storage growth"
+            }
+            traffic_str = "\n".join(
+                f"- {traffic_labels.get(k, k)}: {v}" for k, v in traffic.items() if v
+            )
+            throughput_str = "\n".join(
+                f"- {throughput_labels.get(k, k)}: {v}" for k, v in throughput.items() if v
+            )
+
             report = f"""# System Design Practice Report
 
 ## Design Question
@@ -552,6 +595,16 @@ class SystemDesignPractice:
 
 ### Non-functional
 {chr(10).join(f"- {req}" for req in self.current_design['requirements']['nonfunctional'])}
+
+### Out of Scope
+{chr(10).join(f"- {req}" for req in self.current_design['requirements'].get('out_of_scope', []))}
+
+## Capacity Estimation
+### Traffic
+{traffic_str}
+
+### Throughput
+{throughput_str}
 
 ## APIs
 ### Internal

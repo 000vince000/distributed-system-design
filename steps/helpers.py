@@ -22,6 +22,31 @@ class QuitRequested(Exception):
     pass
 
 
+def parse_human_number(s: str):
+    """Parse a string like '10M', '3.5k', '500' into a float. Returns None if unparseable."""
+    if not s:
+        return None
+    s = s.strip().upper().replace(",", "").replace("_", "")
+    suffixes = {"K": 1e3, "M": 1e6, "B": 1e9}
+    multiplier = 1
+    if s and s[-1] in suffixes:
+        multiplier = suffixes[s[-1]]
+        s = s[:-1]
+    try:
+        return float(s) * multiplier
+    except ValueError:
+        return None
+
+
+def format_human_number(n: float) -> str:
+    """Format a number using K/M/B suffixes, e.g. 1500 -> '1.5K'."""
+    for suffix, threshold in (("B", 1e9), ("M", 1e6), ("K", 1e3)):
+        if abs(n) >= threshold:
+            value = n / threshold
+            return f"{value:.2f}".rstrip("0").rstrip(".") + suffix
+    return f"{n:.2f}".rstrip("0").rstrip(".")
+
+
 class InputHelper:
     def __init__(self, console: Console, prompt: Prompt):
         self.console = console
@@ -29,6 +54,21 @@ class InputHelper:
         self.SKIP_CHOICE = "x"  # Standard skip/finish choice
         self.QUIT_CHOICE = "q"  # Standard graceful-exit choice
         self.UNDO_CHOICE = "u"  # Undo last entered line, in get_multi_line_input
+
+    def get_line_input(self, prompt: str, default: str = "") -> str:
+        """Get a single line of free-text input.
+
+        Args:
+            prompt: The prompt to display
+            default: Value to use if the user just presses enter
+        """
+        suffix = f" [{default}]" if default else ""
+        self.console.print(f"\n{prompt}{suffix} (or '{self.QUIT_CHOICE}' to quit)")
+        line = input()
+        stripped = line.strip()
+        if stripped == self.QUIT_CHOICE:
+            raise QuitRequested()
+        return stripped if stripped else default
 
     def get_multi_line_input(self, prompt: str) -> list:
         """Get multi-line input from user until a blank line is entered.
@@ -127,11 +167,12 @@ class StepNavigationHelper:
         self.prompt = prompt
         self.step_names = {
             1: "Requirements",
-            2: "APIs",
-            3: "Workflows",
-            4: "Architecture",
-            5: "Optimizations",
-            6: "Edge Cases"
+            2: "Capacity Estimation",
+            3: "APIs",
+            4: "Workflows",
+            5: "Architecture",
+            6: "Optimizations",
+            7: "Edge Cases"
         }
     
     def display_step_header(self, step_number: int):

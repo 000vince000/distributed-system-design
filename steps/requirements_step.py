@@ -14,5 +14,10 @@ class RequirementsStep(BaseStep):
         design_data["requirements"]["nonfunctional"] = self.input_helper.get_multi_line_input(
             "Enter non-functional requirements (one per line, empty line to finish):"
         )
-        
-        return design_data 
+
+        self.console.print("\n[bold]Out of Scope:[/bold]")
+        design_data["requirements"]["out_of_scope"] = self.input_helper.get_multi_line_input(
+            "Enter things considered but explicitly discarded, e.g. for lack of time (one per line, empty line to finish):"
+        )
+
+        return design_data

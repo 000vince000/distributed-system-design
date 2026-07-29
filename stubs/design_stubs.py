@@ -17,14 +17,38 @@ def get_step1_stub():
                 "High availability",
                 "Low latency",
                 "Data consistency"
+            ],
+            "out_of_scope": [
+                "Multi-region active-active failover"
             ]
         }
     }
 
 def get_step2_stub():
-    """Stub data for API Design Step (Step 2)"""
+    """Stub data for Capacity Estimation Step (Step 2)"""
     return {
         **get_step1_stub(),
+        "capacity": {
+            "traffic": {
+                "users": "10M DAU",
+                "read_write_ratio": "100:1",
+                "avg_qps": "2K",
+                "peak_multiplier": "3",
+                "peak_qps": "6K"
+            },
+            "throughput": {
+                "avg_read_payload": "2KB",
+                "avg_write_payload": "1KB",
+                "bandwidth": "12MB/sec peak",
+                "storage_growth": "50GB/day"
+            }
+        }
+    }
+
+def get_step3_stub():
+    """Stub data for API Design Step (Step 3)"""
+    return {
+        **get_step2_stub(),
         "apis": {
             "internal": [
                 {
@@ -43,10 +67,10 @@ def get_step2_stub():
         }
     }
 
-def get_step3_stub():
-    """Stub data for Workflow Design Step (Step 3)"""
+def get_step4_stub():
+    """Stub data for Workflow Design Step (Step 4)"""
     return {
-        **get_step2_stub(),
+        **get_step3_stub(),
         "workflows": [
             {
                 "api": "POST /auth",
@@ -83,10 +107,10 @@ def get_step3_stub():
         ]
     }
 
-def get_step4_stub():
-    """Stub data for Architecture Diagramming Step (Step 4)"""
+def get_step5_stub():
+    """Stub data for Architecture Diagramming Step (Step 5)"""
     return {
-        **get_step3_stub(),
+        **get_step4_stub(),
         "architecture": {
             "component_types": {
                 "Auth Service": "Service",
@@ -119,10 +143,10 @@ def get_step4_stub():
         }
     }
 
-def get_step5_stub():
-    """Stub data for Optimization Step (Step 5)"""
+def get_step6_stub():
+    """Stub data for Optimization Step (Step 6)"""
     return {
-        **get_step4_stub(),
+        **get_step5_stub(),
         "optimizations": [
             "Component: Load Balancer",
             "  - Scalability: Horizontal scaling",
@@ -141,10 +165,10 @@ def get_step5_stub():
         ]
     }
 
-def get_step6_stub():
-    """Stub data for Edge Cases Step (Step 6)"""
+def get_step7_stub():
+    """Stub data for Edge Cases Step (Step 7)"""
     return {
-        **get_step5_stub(),
+        **get_step6_stub(),
         "optimizations": [
             "Component: Load Balancer",
             "  - Scalability: Horizontal scaling",
@@ -157,20 +181,20 @@ def get_step6_stub():
 
 def get_complete_stub():
     """Complete stub data for all steps"""
-    return get_step6_stub()
+    return get_step7_stub()
 
 # Example usage:
 if __name__ == "__main__":
     # Test a specific step
     from rich.console import Console
     console = Console()
-    
-    # Example: Test step 5
+
+    # Example: Test step 6 (Optimizations)
     from steps.optimization_step import OptimizationStep
-    step5_data = get_step5_stub()
+    step6_data = get_step6_stub()
     step = OptimizationStep(console)
-    result = step.execute(step5_data)
-    
+    result = step.execute(step6_data)
+
     # Print the result
     console.print("\n[bold]Result:[/bold]")
-    console.print(result) 
+    console.print(result)

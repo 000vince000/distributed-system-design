@@ -9,7 +9,7 @@ class ApiStep(BaseStep):
         later, inline during workflow design (step 3), once a candidate
         actually discovers a step needs one.
         """
-        self.navigation_helper.display_step_header(2)
+        self.navigation_helper.display_step_header(3)
 
         # Create a copy of functional requirements to track which ones have been addressed
         remaining_reqs = design_data["requirements"]["functional"].copy()

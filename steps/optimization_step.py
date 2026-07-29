@@ -110,7 +110,7 @@ class OptimizationStep(BaseStep):
 
     def execute(self, design_data):
         """Add design optimizations."""
-        self.navigation_helper.display_step_header(5)
+        self.navigation_helper.display_step_header(6)
         
         # Initialize optimizations list with hierarchical structure
         all_optimizations = []
