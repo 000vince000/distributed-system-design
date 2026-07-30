@@ -56,6 +56,7 @@ class ArchitectureStep(BaseStep):
             (["db", "database", "postgres", "dynamo"], "Database"),
             (["cache"], "Cache"),
             (["service"], "Service"),
+            (["api"], "API"),
         ]
 
         for comp in sorted(components):
