@@ -113,7 +113,8 @@ class WorkflowStep(BaseStep):
                 step_internal_apis = []
                 if self.input_helper.get_choice(
                     f"Does '{step}' have substeps or need an internal/downstream API call?",
-                    choices=["y", "n"]
+                    choices=["y", "n"],
+                    default="n"
                 ) == "y":
                     substeps = self.input_helper.get_multi_line_input(
                         "Enter substeps, if any (one per line, empty line to finish):"

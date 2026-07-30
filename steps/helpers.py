@@ -109,7 +109,7 @@ class InputHelper:
         Args:
             prompt: The prompt to display
             choices: List of valid choices
-            default: Default choice if only one option
+            default: Choice to use if the user just presses enter
             skip_prompt: Whether to add skip option to prompt
             show_choices: Whether to echo the choice list in brackets after the
                 prompt. Set to False when the choices were already displayed
@@ -133,7 +133,7 @@ class InputHelper:
             "choices": choices,
             "show_choices": show_choices
         }
-        if default and len(choices) == 1:
+        if default:
             prompt_kwargs["default"] = default
         choice = self.prompt.ask(**prompt_kwargs)
         if choice == self.QUIT_CHOICE:
