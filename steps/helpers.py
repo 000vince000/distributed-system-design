@@ -70,14 +70,21 @@ class InputHelper:
             raise QuitRequested()
         return stripped if stripped else default
 
-    def get_multi_line_input(self, prompt: str) -> list:
+    def get_multi_line_input(self, prompt: str, existing: list = None) -> list:
         """Get multi-line input from user until a blank line is entered.
 
         Args:
             prompt: The prompt to display
+            existing: Previously entered lines to pre-load, e.g. when resuming
+                a step that was interrupted mid-way. Shown to the user and
+                stays editable via undo.
         """
         self.console.print(f"\n{prompt} (or '{self.QUIT_CHOICE}' to quit, '{self.UNDO_CHOICE}' to undo last line)")
-        lines = []
+        lines = list(existing) if existing else []
+        if lines:
+            self.console.print("[muted]Already entered:[/muted]")
+            for line in lines:
+                self.console.print(f"  - {line}")
         while True:
             line = input()
             stripped = line.strip()

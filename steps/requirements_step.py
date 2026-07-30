@@ -7,7 +7,8 @@ class RequirementsStep(BaseStep):
         
         self.console.print("\n[bold]Functional Requirements:[/bold]")
         design_data["requirements"]["functional"] = self.input_helper.get_multi_line_input(
-            "Enter functional requirements (one per line, empty line to finish):"
+            "Enter functional requirements (one per line, empty line to finish):",
+            existing=design_data["requirements"]["functional"]
         )
 
         self.console.print("\n[bold]Non-functional Requirements:[/bold]")
@@ -17,12 +18,14 @@ class RequirementsStep(BaseStep):
             "ticker lookup' — different flows often need different guarantees.[/muted]"
         )
         design_data["requirements"]["nonfunctional"] = self.input_helper.get_multi_line_input(
-            "Enter non-functional requirements (one per line, empty line to finish):"
+            "Enter non-functional requirements (one per line, empty line to finish):",
+            existing=design_data["requirements"]["nonfunctional"]
         )
 
         self.console.print("\n[bold]Out of Scope:[/bold]")
         design_data["requirements"]["out_of_scope"] = self.input_helper.get_multi_line_input(
-            "Enter things considered but explicitly discarded, e.g. for lack of time (one per line, empty line to finish):"
+            "Enter things considered but explicitly discarded, e.g. for lack of time (one per line, empty line to finish):",
+            existing=design_data["requirements"]["out_of_scope"]
         )
 
         return design_data
