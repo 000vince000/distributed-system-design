@@ -105,36 +105,44 @@ class WorkflowStep(BaseStep):
 
             for i, step in enumerate(workflow_steps, 1):
                 self.console.print(f"\n[bold]Step {i}: {escape(step)}[/bold]")
-                substeps = self.input_helper.get_multi_line_input(
-                    "Enter substeps (one per line, empty line to finish):"
-                )
 
-                # Discover the internal/downstream API this step needs, on the spot
+                # Most steps have neither substeps nor a new internal/downstream
+                # API call, so gate both behind a single skippable question
+                # instead of always forcing the substeps prompt.
+                substeps = []
                 step_internal_apis = []
                 if self.input_helper.get_choice(
-                    f"Does '{step}' require a new internal/downstream API call?",
+                    f"Does '{step}' have substeps or need an internal/downstream API call?",
                     choices=["y", "n"]
                 ) == "y":
-                    internal_endpoint = self.input_helper.get_multi_line_input(
-                        "Enter internal API endpoint:"
+                    substeps = self.input_helper.get_multi_line_input(
+                        "Enter substeps, if any (one per line, empty line to finish):"
                     )
-                    if internal_endpoint:
-                        internal_request = self.input_helper.get_multi_line_input(
-                            "Enter request definition (one per line, empty line to finish):"
-                        )
-                        internal_response = self.input_helper.get_multi_line_input(
-                            "Enter response definition (one per line, empty line to finish):"
-                        )
 
-                        internal_api = {
-                            "endpoint": internal_endpoint[0],
-                            "request": internal_request,
-                            "response": internal_response,
-                            "requirement": req,
-                            "workflow_api": api["endpoint"]
-                        }
-                        design_data["apis"]["internal"].append(internal_api)
-                        step_internal_apis.append(internal_api["endpoint"])
+                    if self.input_helper.get_choice(
+                        f"Does '{step}' require a new internal/downstream API call?",
+                        choices=["y", "n"]
+                    ) == "y":
+                        internal_endpoint = self.input_helper.get_multi_line_input(
+                            "Enter internal API endpoint:"
+                        )
+                        if internal_endpoint:
+                            internal_request = self.input_helper.get_multi_line_input(
+                                "Enter request definition (one per line, empty line to finish):"
+                            )
+                            internal_response = self.input_helper.get_multi_line_input(
+                                "Enter response definition (one per line, empty line to finish):"
+                            )
+
+                            internal_api = {
+                                "endpoint": internal_endpoint[0],
+                                "request": internal_request,
+                                "response": internal_response,
+                                "requirement": req,
+                                "workflow_api": api["endpoint"]
+                            }
+                            design_data["apis"]["internal"].append(internal_api)
+                            step_internal_apis.append(internal_api["endpoint"])
 
                 workflow["steps"].append({
                     "step": step,
