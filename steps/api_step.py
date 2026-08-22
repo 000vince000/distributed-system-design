@@ -11,10 +11,16 @@ class ApiStep(BaseStep):
         """
         self.navigation_helper.display_step_header(3)
 
-        # Create a copy of functional requirements to track which ones have been addressed
-        remaining_reqs = design_data["requirements"]["functional"].copy()
-        design_data["apis"]["internal"] = []
-        design_data["apis"]["external"] = []
+        design_data["apis"].setdefault("internal", [])
+        design_data["apis"].setdefault("external", [])
+
+        # Create a copy of functional requirements to track which ones have been addressed,
+        # excluding any already recorded (e.g. from a resumed partial save)
+        already_addressed = {api["requirement"] for api in design_data["apis"]["external"]}
+        remaining_reqs = [
+            req for req in design_data["requirements"]["functional"]
+            if req not in already_addressed
+        ]
 
         while remaining_reqs:
             self.console.print("\n[bold]Select a functional requirement to design an API for:[/bold]")
